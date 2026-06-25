@@ -8,8 +8,7 @@ export class AuthController {
     }
     signup = async (req: Request, res: Response) => {
         const { name, email, password } = req.body;
-        // Add ZOD validation here later or probably in services not here in contorller.
         const user = await this.services.signup(name, email, password);
-        res.send({ message: "Successfuly signed up" }); // Integrate JWT here later
+        res.status(201).json({ message: "Successfuly signed up" }); // Integrate JWT here later
     };
 }
