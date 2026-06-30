@@ -1,6 +1,5 @@
 import argon2 from "argon2";
 import { AppError } from "../utils/AppError";
-
 export class HashHandler {
     async hashPassword(password: string) {
         try {

@@ -1,3 +1,4 @@
+import { env } from "../../config/env";
 import { Router } from "express";
 import { AuthController } from "./auth.controller";
 import { AuthServices } from "./auth.services";
@@ -5,6 +6,7 @@ import { AuthRepository } from "./auth.repository";
 import { HashHandler } from "../../utils/hashHandler";
 import { validateRequest } from "../../middleware/validateRequest";
 import { signupSchema } from "./auth.schemas";
+import { SessionHandler } from "../../utils/redisHandler";
 
 const router = Router();
 

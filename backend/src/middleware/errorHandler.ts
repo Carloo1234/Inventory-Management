@@ -1,25 +1,24 @@
 import type { Request, Response, NextFunction } from "express";
 import { AppError, FormError } from "../utils/AppError";
+import { ApiResponse } from "../utils/apiResponse";
 
 export class ErrorHandler {
     handleErrors = (error: Error, req: Request, res: Response, next: NextFunction) => {
         // Handle form errors before app errors because FormError is a subclass of AppError
         if (error instanceof FormError) {
-            return res.status(400).json({ status: "Bad Request", message: "Validation Error", errors: error.errors });
-        }
-
-        if (error instanceof AppError) {
-            return res.status(error.status_code).json({
-                status: "error",
-                message: error.message,
+            return ApiResponse.error(res, error.status_code, null, error.errors, {
+                type: "error",
+                message: "Invalid form entry. Please fix the highlighted fields and try again.",
             });
         }
 
+        if (error instanceof AppError) {
+            return ApiResponse.error(res, error.status_code, null, null, { type: "error", message: error.message });
+        }
+
         console.error(error); // log the real error server-side
-        return res.status(500).json({
-            status: "error",
-            message: "Internal Server Error",
-        });
+
+        return ApiResponse.error(res, 500, null, null, { type: "error", message: "Internal server error" });
     };
 }
 
