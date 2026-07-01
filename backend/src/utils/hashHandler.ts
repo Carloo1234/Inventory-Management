@@ -10,10 +10,19 @@ export class HashHandler {
                 parallelism: 4, // 4 parallel threads
             });
         } catch (error) {
-            if (error instanceof Error) {
-                throw new AppError(`Hashing Error | ${error.message}`, 500);
+            throw new AppError("Internal error with hashing", 500);
+        }
+    }
+
+    async verifyPassword(password: string, hashedPassword: string) {
+        try {
+            const isCorrectPassword = await argon2.verify(hashedPassword, password);
+            if (isCorrectPassword) {
+                return true;
             }
-            throw new AppError("Internal Error Occured With Hashing", 500);
+            return false;
+        } catch (error) {
+            throw new AppError("Internal error with hashing", 500);
         }
     }
 }

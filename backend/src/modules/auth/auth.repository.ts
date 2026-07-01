@@ -49,9 +49,42 @@ export class AuthRepository {
         }
     };
 
-    createSession = async (sessionId: string, sessionData: SessionData) => {
-        console.log("Create session ran");
+    getUserWithEmail = async (email: string) => {
+        try {
+            const user = (await db.select().from(users).where(eq(users.email, email)))[0];
+            if (!user) return null;
+            return user;
+        } catch (error) {
+            if (error instanceof AppError) throw error;
+            throw new AppError("Error fetching user from database", 501);
+        }
+    };
 
+    getUserWithUserId = async (userId: string) => {
+        try {
+            const user = (await db.select().from(users).where(eq(users.id, userId)))[0];
+            if (!user) return null;
+            return user;
+        } catch (error) {
+            if (error instanceof AppError) throw error;
+            throw new AppError("Error fetching user from database", 501);
+        }
+    };
+
+    createSession = async (sessionId: string, sessionData: SessionData) => {
         return await SessionHandler.createSession(sessionId, sessionData);
+    };
+
+    getDeviceCount = async (userId: string) => {
+        return await SessionHandler.getDeviceCount(userId);
+    };
+
+    deleteDeviceSessions = async (sessionId: string) => {
+        const sessionData = await SessionHandler.getSessionData(sessionId);
+        if (!sessionData) {
+            return 1; // Success
+        }
+        await SessionHandler.deleteAllDeviceSessionKeys(sessionData);
+        return 1;
     };
 }

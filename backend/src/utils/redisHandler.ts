@@ -56,6 +56,26 @@ export class SessionHandler {
         return (await redisClient.exists(`auth:recently_revoked_sessions:${sessionId}`)) === 1;
     };
 
+    static getDeviceCount = async (userId: string) => {
+        const result = await redisClient.ft.search("idx:auth:sessions", `@userId:{${escapeTag(userId)}}`, {
+            LIMIT: {
+                from: 0,
+                size: 1000, // Set this to the maximum expected size
+            },
+        });
+        // Count how many unique family_id there is
+        const familyIds: string[] = [];
+        result.documents.forEach((doc) => {
+            const familyId = doc.value.familyId;
+            if (familyId && typeof familyId === "string") {
+                if (!familyIds.includes(familyId)) {
+                    familyIds.push(familyId);
+                }
+            }
+        });
+        return familyIds.length;
+    };
+
     static rotateSessionToken = async (
         sessionId: string,
         sessionData: SessionData,

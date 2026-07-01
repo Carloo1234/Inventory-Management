@@ -11,6 +11,13 @@ export class AuthController {
         this.services = services;
     }
     signup = async (req: Request, res: Response) => {
+        if (req.cookies.session_id) {
+            return ApiResponse.error(res, 400, null, null, {
+                type: "error",
+                message: "You are already logged in, please log out first.",
+            });
+        }
+
         console.log("Controller ran");
         const { name, email, password } = req.body;
         const result = await this.services.signup(name, email, password, req.ip);
@@ -49,5 +56,56 @@ export class AuthController {
             // Handled by main error handler
             throw new AppError("Database error creating user", 500);
         }
+    };
+
+    signin = async (req: Request, res: Response) => {
+        const { email, password } = req.body;
+
+        if (req.cookies.session_id) {
+            return ApiResponse.error(res, 400, null, null, {
+                type: "error",
+                message: "You are already logged in, please log out first.",
+            });
+        }
+
+        const sessionId = await this.services.signin(email, password, req.ip);
+        res.cookie("session_id", sessionId, {
+            httpOnly: true,
+            secure: env.NODE_ENV === "production",
+            sameSite: env.COOKIE_SAMESITE,
+            maxAge: parseTime(env.SESSION_EXPIRY, "ms")!,
+        });
+        ApiResponse.success(
+            res,
+            201,
+            null,
+            { type: "success", message: "Successfully signed in." },
+            { name: "ROOT", params: null },
+        );
+    };
+
+    signout = async (req: Request, res: Response) => {
+        const sessionId: string | null = req.cookies.session_id;
+
+        if (!sessionId) return ApiResponse.success(res, 200, null, null, { name: "ROOT", params: null });
+
+        await this.services.signout(sessionId);
+        res.clearCookie("session_id");
+        ApiResponse.success(
+            res,
+            200,
+            null,
+            { type: "success", message: "Successfully logged out" },
+            { name: "ROOT", params: null },
+        );
+    };
+
+    me = async (req: Request, res: Response) => {
+        if (!req.sessionData) {
+            return ApiResponse.error(res, 401, null, null, { type: "error", message: "Invalid session" });
+        }
+        const user = await this.services.me(req.sessionData);
+        const { passwordHash, ...cleanUser } = user;
+        ApiResponse.success(res, 200, { user: cleanUser });
     };
 }

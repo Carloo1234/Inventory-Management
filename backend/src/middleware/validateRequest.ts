@@ -1,7 +1,7 @@
 import { z, ZodError } from "zod";
 import { FormError } from "../utils/AppError";
 import type { Request, Response, NextFunction } from "express";
-export function validateRequest<T extends z.ZodType>(schema: T) {
+export function validateRequest(schema: z.ZodType) {
     return (req: Request, res: Response, next: NextFunction) => {
         // If the request is invalid, this line throws ZodError which goes to main error handler.
         try {

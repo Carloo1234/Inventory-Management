@@ -3,8 +3,8 @@ import type { CleanErrors } from "./AppError";
 export class ApiResponse {
     static success(
         res: Response,
-        status_code = 200,
-        data = null,
+        status_code: number = 200,
+        data: Record<string, any> | null = null,
         toast: Toast | null = null,
         redirect: Redirect | null = null,
     ) {
