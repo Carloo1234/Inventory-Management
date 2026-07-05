@@ -4,7 +4,6 @@ import { HashHandler } from "../../utils/hashHandler";
 import { v7 as uuidv7 } from "uuid";
 import crypto from "node:crypto";
 import type { SessionData } from "../../utils/redisHandler";
-import { ApiResponse } from "../../utils/apiResponse";
 
 export class AuthServices {
     private repository: AuthRepository;
@@ -17,6 +16,7 @@ export class AuthServices {
         console.log("Services ran");
         // User area
         const userExists: boolean = await this.repository.doesUserExist(email);
+
         if (userExists) {
             throw new FormError("Account with this email already exists", 409, {
                 formErrors: [],
@@ -54,26 +54,24 @@ export class AuthServices {
 
     signin = async (email: string, password: string, ip: string | undefined) => {
         const user = await this.repository.getUserWithEmail(email);
-        if (!user) {
+
+        // Hash anyways even if user doesnt exist to avoid email enumeration by timing side-channel attack
+        const dummyHash =
+            "$argon2id$v=19$m=65536,t=3,p=4$LeIAXdklMNyVYWZch9az7Q$NiS8/xM5CXlA7Nr5HyBkHMPoQhOwp6Jy9jDnoRu13Gk";
+        const correctPassword = await this.hashHandler.verifyPassword(password, user?.passwordHash || dummyHash);
+
+        if (!user || !correctPassword) {
             throw new FormError("The password or email you have entered is incorrect", 401, {
                 formErrors: ["Incorrect email or password"],
                 fieldErrors: {},
             });
         }
 
-        const correctPassword = await this.hashHandler.verifyPassword(password, user.passwordHash);
-
-        if (!correctPassword) {
-            throw new FormError("The password or email you have entered is incorrect", 401, {
-                formErrors: ["Incorrect email or password"],
-                fieldErrors: {},
-            });
-        }
         // Password is correct -- Check if device count hasnt exceeded 10
         const deviceCount = await this.repository.getDeviceCount(user.id);
 
         if (deviceCount >= 10) {
-            throw new AppError("You cannot login on more than 10 devices. Please logout of other devices", 401);
+            throw new AppError("You cannot login on more than 10 devices. Please logout of other devices", 403);
         }
 
         // Devices logged in are less than 10 -- Generate token

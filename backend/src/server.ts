@@ -17,6 +17,7 @@ try {
     } else {
         console.log("Index errors");
         console.error(e);
+        process.exit(1);
     }
 }
 app.use(express.json());

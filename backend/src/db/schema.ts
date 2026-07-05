@@ -14,17 +14,3 @@ export const users = pgTable("users", {
         .notNull()
         .$onUpdate(() => new Date()),
 });
-
-export const tokens = pgTable("tokens", {
-    id: uuid("id")
-        .primaryKey()
-        .default(sql`uuidv7()`),
-    hashedToken: varchar("token", { length: 64 }).notNull().unique(),
-    authId: uuid("auth_id").notNull(),
-    userId: uuid("user_id")
-        .references(() => users.id, { onDelete: "cascade" })
-        .notNull(),
-    ip: varchar("ip", { length: 45 }),
-    isRevoked: boolean("is_revoked").default(false).notNull(),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-});

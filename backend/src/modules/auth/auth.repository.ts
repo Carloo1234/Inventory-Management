@@ -1,9 +1,6 @@
 import { db } from "../../db/index";
 import { users } from "../../db/schema";
 import { eq } from "drizzle-orm";
-import redisClient from "../../config/redis";
-import { env } from "../../config/env";
-import { parseTime } from "../../utils/generalUtils";
 import { SessionHandler, type SessionData } from "../../utils/redisHandler";
 import { AppError } from "../../utils/AppError";
 
@@ -67,7 +64,7 @@ export class AuthRepository {
             return user;
         } catch (error) {
             if (error instanceof AppError) throw error;
-            throw new AppError("Error fetching user from database", 501);
+            throw new AppError("Error fetching user from database", 500);
         }
     };
 

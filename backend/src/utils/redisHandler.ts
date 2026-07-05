@@ -14,7 +14,9 @@ function escapeTag(value: string): string {
     return value.replace(/[-,.<>{}[\]"':;!@#$%^&*()+=~ ]/g, "\\$&");
 }
 
-const redisPool = await createClientPool()
+const redisPool = await createClientPool({
+    url: env.NODE_ENV === "production" ? env.REDIS_URL : "redis://localhost:6379",
+})
     .on("error", (err) => console.error("Redis Client Pool Error", err))
     .connect();
 
@@ -25,6 +27,7 @@ export class SessionHandler {
             await redisClient.multi().hSet(key, sessionData).expire(key, parseTime(env.SESSION_EXPIRY, "s")!).exec();
             return 1;
         } catch (error) {
+            console.log(error);
             return 0;
         }
     };
@@ -88,6 +91,20 @@ export class SessionHandler {
 
         return redisPool?.execute(async (client) => {
             await client.watch(key);
+
+            // Check fresh session data for concurrent requests that thought both were not revoked
+            // but it got revoked by another request right before this (and it already executed so it wont
+            // be detected by watch)
+
+            const freshSessionData = await client.hGetAll(key);
+            if (!freshSessionData) {
+                await client.unwatch();
+                return null; // Very very unlikely scenario to ever happen
+            }
+            if (freshSessionData.revoked === "true") {
+                await client.unwatch();
+                return null;
+            }
 
             const result = await client
                 .multi()

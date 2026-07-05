@@ -11,14 +11,6 @@ export class AuthController {
         this.services = services;
     }
     signup = async (req: Request, res: Response) => {
-        if (req.cookies.session_id) {
-            return ApiResponse.error(res, 400, null, null, {
-                type: "error",
-                message: "You are already logged in, please log out first.",
-            });
-        }
-
-        console.log("Controller ran");
         const { name, email, password } = req.body;
         const result = await this.services.signup(name, email, password, req.ip);
         // If user and sessionId both successfuly created
@@ -61,13 +53,6 @@ export class AuthController {
     signin = async (req: Request, res: Response) => {
         const { email, password } = req.body;
 
-        if (req.cookies.session_id) {
-            return ApiResponse.error(res, 400, null, null, {
-                type: "error",
-                message: "You are already logged in, please log out first.",
-            });
-        }
-
         const sessionId = await this.services.signin(email, password, req.ip);
         res.cookie("session_id", sessionId, {
             httpOnly: true,
@@ -85,7 +70,7 @@ export class AuthController {
     };
 
     signout = async (req: Request, res: Response) => {
-        const sessionId: string | null = req.cookies.session_id;
+        const sessionId: string | undefined = req.sessionId;
 
         if (!sessionId) return ApiResponse.success(res, 200, null, null, { name: "ROOT", params: null });
 

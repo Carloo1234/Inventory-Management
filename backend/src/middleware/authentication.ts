@@ -48,6 +48,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
             // If revoked recently(10s). allow request as its in grace period
             if (isRecentlyRevoked) {
                 req.sessionData = sessionData;
+                req.sessionId = sessionId;
                 return next();
             }
             // If not recently revoked, detect suspisous activity and log out device
@@ -86,12 +87,14 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
             // The previous conccurrent successful request already revoked token and passed new cookie
             if (!result) {
                 req.sessionData = sessionData;
+                req.sessionId = sessionId;
                 return next();
             }
             // If request succeeded (If 2 concurrent requests, this was first), continue normally.
 
             // Set session data for next functions
             req.sessionData = newSessionData;
+            req.sessionId = newSessionId;
 
             // Override the cookie
             res.cookie("session_id", newSessionId, {
@@ -104,6 +107,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         }
         // If session found, not revoked, and not yet to be rotated.
         req.sessionData = sessionData;
+        req.sessionId = sessionId;
         return next();
     } catch (error) {
         console.log(error);
@@ -113,4 +117,44 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
             message: "There has been an error on our end authenticaing you.",
         });
     }
+};
+
+export const redirectIfAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
+    const sessionId: string | null = req.cookies.session_id;
+
+    if (!sessionId) {
+        return next();
+    }
+
+    const sessionData: SessionData | null = await SessionHandler.getSessionData(sessionId);
+    if (!sessionData) {
+        return next();
+    }
+
+    if (sessionData.revoked === "true") {
+        const recentlyRevoked = await SessionHandler.isInRecentlyRevoked(sessionId);
+        if (recentlyRevoked) {
+            // Logged in so redirect
+            return ApiResponse.success(
+                res,
+                200,
+                null,
+                { type: "info", message: "You are already logged in." },
+                { name: "ROOT", params: null },
+            );
+        }
+
+        // Not valid
+        res.clearCookie("session_id");
+        return next();
+    }
+
+    // If session data found, that means he is authenticated so redirect
+    return ApiResponse.success(
+        res,
+        200,
+        null,
+        { type: "info", message: "You are already logged in." },
+        { name: "ROOT", params: null },
+    );
 };
