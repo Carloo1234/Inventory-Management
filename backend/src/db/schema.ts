@@ -5,7 +5,6 @@ import {
     uuid,
     timestamp,
     varchar,
-    boolean,
     text,
     numeric,
     integer,
@@ -21,8 +20,8 @@ export const users = pgTable("users", {
     name: varchar("name", { length: 255 }),
     email: varchar("email", { length: 255 }).notNull().unique(),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" })
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
         .defaultNow()
         .notNull()
         .$onUpdate(() => new Date()),
@@ -36,6 +35,11 @@ export const shops = pgTable("shops", {
     ownerId: uuid("owner_id")
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+        .defaultNow()
+        .notNull()
+        .$onUpdate(() => new Date()),
 });
 
 export const products = pgTable(
@@ -49,6 +53,12 @@ export const products = pgTable(
             .notNull(),
         name: varchar("name", { length: 255 }).notNull(),
         description: text("description"),
+
+        createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
     },
     (table) => [
         // Required for postgres composite forign key even tho redundant logically
@@ -66,6 +76,11 @@ export const attributeNames = pgTable(
             .references(() => shops.id, { onDelete: "cascade" })
             .notNull(),
         name: varchar("name", { length: 100 }).notNull(),
+        createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
     },
     (table) => [unique("unique_name_shop_id").on(table.shopId, table.name)],
 );
@@ -80,6 +95,11 @@ export const attributeValues = pgTable(
             .references(() => attributeNames.id, { onDelete: "cascade" })
             .notNull(),
         value: varchar("value", { length: 100 }).notNull(),
+        createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
     },
     (table) => [unique("unique_attribute_name_value").on(table.attributeNameId, table.value)],
 );
@@ -98,6 +118,11 @@ export const productVariants = pgTable(
         barcode: varchar("barcode", { length: 14 }),
         price: numeric("price", { precision: 12, scale: 2 }).notNull(),
         quantity: integer("quantity").notNull().default(0),
+        createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
     },
     (table) => [
         foreignKey({
@@ -110,7 +135,7 @@ export const productVariants = pgTable(
     ],
 );
 
-// Thorugh table
+// Through table
 export const productVariantsAttributeValues = pgTable(
     "product_variants_attribute_values",
     {
@@ -120,6 +145,11 @@ export const productVariantsAttributeValues = pgTable(
         attributeValueId: uuid("attribute_value_id")
             .references(() => attributeValues.id, { onDelete: "cascade" })
             .notNull(),
+        createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
     },
     (table) => [primaryKey({ columns: [table.productVariantId, table.attributeValueId] })],
 );
@@ -128,12 +158,28 @@ export const productVariantsAttributeValues = pgTable(
 
 export const userRelations = relations(users, ({ many }) => ({ shops: many(shops) }));
 
-export const shopRelations = relations(shops, ({ many }) => ({ products: many(products) }));
+export const shopRelations = relations(shops, ({ many, one }) => ({
+    products: many(products),
+    owner: one(users, {
+        fields: [shops.ownerId],
+        references: [users.id],
+    }),
+}));
 
-export const productsRelations = relations(products, ({ many }) => ({ productVariants: many(productVariants) }));
+export const productsRelations = relations(products, ({ many, one }) => ({
+    productVariants: many(productVariants),
+    shop: one(shops, {
+        fields: [products.shopId],
+        references: [shops.id],
+    }),
+}));
 
-export const productVariantsRelations = relations(productVariants, ({ many }) => ({
+export const productVariantsRelations = relations(productVariants, ({ many, one }) => ({
     variantAttributeValues: many(productVariantsAttributeValues),
+    product: one(products, {
+        fields: [productVariants.productId, productVariants.shopId],
+        references: [products.id, products.shopId],
+    }),
 }));
 
 export const productVariantsAttributeValuesRelations = relations(productVariantsAttributeValues, ({ one }) => ({
@@ -153,3 +199,10 @@ export const attributeValuesRelations = relations(attributeValues, ({ one }) => 
         references: [attributeNames.id],
     }),
 }));
+
+export const attributeNamesRelations = relations(attributeNames, ({ many, one }) => ({
+    values: many(attributeValues),
+    shop: one(shops, { fields: [attributeNames.shopId], references: [shops.id] }),
+}));
+
+// TODO: Add indexes later to speed up database
