@@ -2,6 +2,7 @@ import { env } from "./config/env";
 import express from "express";
 import { connectRedis, initSearchIndexes } from "./config/redis";
 import authRouter from "./modules/auth/auth.routes";
+import shopsRouter from "./modules/shops/shops.routes";
 import { ErrorHandler } from "./middleware/errorHandler";
 import cookieParser from "cookie-parser";
 
@@ -25,7 +26,7 @@ app.use(cookieParser());
 app.set("trust proxy", env.TRUST_PROXY);
 
 app.use("/auth/", authRouter);
-
+app.use("/shops/", shopsRouter);
 const errorHandler = new ErrorHandler();
 app.use(errorHandler.handleErrors);
 

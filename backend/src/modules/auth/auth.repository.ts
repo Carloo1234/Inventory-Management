@@ -1,8 +1,9 @@
-import { db } from "../../db/index";
+import { db, type QueryOptions } from "../../db/index";
 import { users } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { SessionHandler, type SessionData } from "../../utils/redisHandler";
 import { AppError } from "../../utils/AppError";
+import type { PgSelectBuilder } from "drizzle-orm/pg-core";
 
 interface PgError extends Error {
     code: string; // PostgreSQL error code (e.g., '23505')
@@ -10,6 +11,8 @@ interface PgError extends Error {
     table?: string; // Table name
     constraint?: string; // Specific constraint violated
 }
+
+type UserField = keyof typeof users.$inferSelect;
 
 export class AuthRepository {
     async doesUserExist(email: string): Promise<boolean> {
@@ -57,13 +60,33 @@ export class AuthRepository {
         }
     };
 
-    getUserWithUserId = async (userId: string) => {
+    getUserWithUserId = async <T = Partial<typeof users.$inferSelect>>(
+        userId: string,
+        specificFields: UserField[] = [],
+        options?: QueryOptions,
+    ) => {
+        const tx = options?.tx || db;
         try {
-            const user = (await db.select().from(users).where(eq(users.id, userId)))[0];
-            if (!user) return null;
-            return user;
+            let baseQuery: any;
+            if (specificFields.length === 0) {
+                baseQuery = tx.select();
+            } else {
+                const selectObject: Record<string, any> = {};
+                for (let field of specificFields) {
+                    selectObject[field] = users[field];
+                }
+                baseQuery = tx.select(selectObject);
+            }
+            let query = baseQuery.from(users).where(eq(users.id, userId));
+            if (options?.forUpdate) {
+                query = query.for("update");
+            }
+
+            const result = (await query)[0];
+            if (specificFields.length === 0) return (result as typeof users.$inferSelect) || null;
+            return (result as T) || null;
         } catch (error) {
-            if (error instanceof AppError) throw error;
+            console.log(error);
             throw new AppError("Error fetching user from database", 500);
         }
     };
