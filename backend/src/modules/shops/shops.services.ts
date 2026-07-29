@@ -36,4 +36,26 @@ export class ShopsServices {
         });
         return shop;
     };
+
+    getUserShops = async (userId: string) => {
+        const shops = await this.shopRepository.getUserShops(userId);
+        return shops;
+    };
+
+    getShop = async (shopId: string, userId: string) => {
+        const shop = await this.shopRepository.getShop(shopId);
+        if (!shop) throw new AppError("Shop not found.", 404);
+        if (shop.ownerId !== userId) {
+            throw new AppError("You do not have permission to access this shop.", 403);
+        }
+        return shop;
+    };
+
+    deleteShop = async (shopId: string, userId: string) => {
+        const updatedShop = await this.shopRepository.softDeleteShop(shopId, userId);
+        if (!updatedShop) {
+            throw new AppError("Shop was not found to delete.", 404); // Or its possible shop belongs to another user but we send this unified response.
+        }
+        return updatedShop;
+    };
 }

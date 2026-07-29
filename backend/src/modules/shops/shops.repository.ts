@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, type QueryOptions } from "../../db";
 import { shops } from "../../db/schema";
 import { AppError } from "../../utils/AppError";
@@ -17,6 +17,48 @@ export class ShopsRepository {
         } catch (error) {
             console.log(error);
             throw new AppError("Database error occured creating shop.", 500);
+        }
+    };
+    getUserShops = async (userId: string, options?: QueryOptions) => {
+        const tx = options?.tx || db;
+        try {
+            const userShops = await tx.select().from(shops).where(eq(shops.ownerId, userId));
+            return userShops;
+        } catch (error) {
+            console.log(`Error in shops.repository>getUserShops, error: ${error}`);
+            throw new AppError("Error occured accessing database, please try again.", 501);
+        }
+    };
+
+    getShop = async (shopId: string, options?: QueryOptions) => {
+        const tx = options?.tx || db;
+        try {
+            const shop = await tx.select().from(shops).where(eq(shops.id, shopId)).limit(1);
+            if (shop.length <= 0) {
+                return null;
+            }
+            return shop[0];
+        } catch (error) {
+            console.log(`Error in shops.repository>getShop, error: ${error}`);
+            throw new AppError("Error occured accessing databsae, please try again.", 501);
+        }
+    };
+
+    softDeleteShop = async (shopId: string, userId: string, options?: QueryOptions) => {
+        const tx = options?.tx || db;
+        try {
+            const updatedShops = await tx
+                .update(shops)
+                .set({ softDelete: true })
+                .where(and(eq(shops.id, shopId), eq(shops.ownerId, userId)))
+                .returning();
+            if (updatedShops.length <= 0) {
+                return null;
+            }
+            return updatedShops[0];
+        } catch (error) {
+            console.log(`Error in shops.repository>getShop, error: ${error}`);
+            throw new AppError("Error occured accessing databsae, please try again.", 501);
         }
     };
 }

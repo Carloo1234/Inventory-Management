@@ -43,6 +43,13 @@
       "when": 1784020781763,
       "tag": "0005_natural_chameleon",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785340919172,
+      "tag": "0006_absent_nemesis",
+      "breakpoints": true
     }
   ]
 }

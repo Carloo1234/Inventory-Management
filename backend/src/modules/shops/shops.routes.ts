@@ -15,5 +15,8 @@ const shopServices = new ShopsServices(shopRepository, userRepository);
 const shopController = new ShopsController(shopServices);
 // Create shop 'shops/'
 router.post("/", authenticate, validateRequest(createShopSchema), shopController.createShop);
+router.get("/my-shops", authenticate, shopController.getMyShops); // Returns soft deleted shops too, frontend can filter as wanted
+router.get("/:shopId", authenticate, shopController.getShop);
+router.delete("/:shopId", authenticate, shopController.deleteShop);
 
 export default router;

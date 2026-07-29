@@ -11,6 +11,7 @@ import {
     unique,
     foreignKey,
     primaryKey,
+    boolean,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -42,6 +43,7 @@ export const shops = pgTable("shops", {
         .defaultNow()
         .notNull()
         .$onUpdate(() => new Date()),
+    softDelete: boolean("softDelete").default(false),
 });
 
 export const products = pgTable(

@@ -1,3 +1,6 @@
+import { ApiResponse } from "./apiResponse";
+import type { Request, Response } from "express";
+
 type TimeUnit = "ms" | "s" | "m" | "h" | "d" | "w";
 
 /**
@@ -33,4 +36,15 @@ export function parseTime(timeStr: string, targetUnit: TimeUnit = "s"): number |
 
     // Step 2: Convert milliseconds into the requested target unit
     return totalMs / msMultipliers[targetUnit];
+}
+
+export function getSessionIdAndSessionData(req: Request, res: Response) {
+    if (!req.sessionData || !req.sessionId) {
+        ApiResponse.error(res, 401, null, null, {
+            type: "error",
+            message: "Problem occurred authenticating your session. Please log in again.",
+        });
+        return null;
+    }
+    return { sessionId: req.sessionId, sessionData: req.sessionData };
 }

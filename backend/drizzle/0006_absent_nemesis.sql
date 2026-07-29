@@ -1,0 +1,1 @@
+ALTER TABLE "shops" ADD COLUMN "softDelete" boolean DEFAULT false;
