@@ -12,9 +12,12 @@ export const signupSchema = z
             .max(255, "Password must be less than 255 characters."),
         confirm: z.string({ error: "Password is required" }),
     })
-    .refine((data) => data.password === data.confirm, { error: "Passwords don't match", path: ["confirm"] });
+    .refine((data) => data.password === data.confirm, { error: "Passwords don't match", path: ["confirm"] })
+    .strict();
 
-export const signinSchema = z.object({
-    email: z.email("Must be in the format example@mail.com").max(255, "Must be less than 256 characters long"),
-    password: z.string("Password is required").max(255, "Password must be less than 255 characters."),
-});
+export const signinSchema = z
+    .object({
+        email: z.email("Must be in the format example@mail.com").max(255, "Must be less than 256 characters long"),
+        password: z.string("Password is required").max(255, "Password must be less than 255 characters."),
+    })
+    .strict();

@@ -2,6 +2,7 @@ import { db } from "../../db";
 import { AppError } from "../../utils/AppError";
 import type { AuthRepository } from "../auth/auth.repository";
 import type { ShopsRepository } from "./shops.repository";
+import type { PatchShopBody } from "./shops.schemas";
 
 export class ShopsServices {
     private shopRepository: ShopsRepository;
@@ -55,6 +56,14 @@ export class ShopsServices {
         const updatedShop = await this.shopRepository.softDeleteShop(shopId, userId);
         if (!updatedShop) {
             throw new AppError("Shop was not found to delete.", 404); // Or its possible shop belongs to another user but we send this unified response.
+        }
+        return updatedShop;
+    };
+
+    updateShop = async (shopId: string, userId: string, data: PatchShopBody) => {
+        const updatedShop = await this.shopRepository.updateShop(shopId, userId, data);
+        if (!updatedShop) {
+            throw new AppError("Shop was not found", 404); // Even if exists but not owned by user. unified message to prevent hacker from knowing shopId's potentailly
         }
         return updatedShop;
     };

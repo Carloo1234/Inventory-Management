@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db, type QueryOptions } from "../../db";
 import { shops } from "../../db/schema";
 import { AppError } from "../../utils/AppError";
+import type { PatchShopBody } from "./shops.schemas";
 
 export class ShopsRepository {
     getUserShopsCount = async (userId: string, options?: QueryOptions) => {
@@ -26,7 +27,7 @@ export class ShopsRepository {
             return userShops;
         } catch (error) {
             console.log(`Error in shops.repository>getUserShops, error: ${error}`);
-            throw new AppError("Error occured accessing database, please try again.", 501);
+            throw new AppError("Error occured accessing database, please try again.", 500);
         }
     };
 
@@ -40,7 +41,7 @@ export class ShopsRepository {
             return shop[0];
         } catch (error) {
             console.log(`Error in shops.repository>getShop, error: ${error}`);
-            throw new AppError("Error occured accessing databsae, please try again.", 501);
+            throw new AppError("Error occured accessing databsae, please try again.", 500);
         }
     };
 
@@ -58,7 +59,27 @@ export class ShopsRepository {
             return updatedShops[0];
         } catch (error) {
             console.log(`Error in shops.repository>getShop, error: ${error}`);
-            throw new AppError("Error occured accessing databsae, please try again.", 501);
+            throw new AppError("Error occured accessing databsae, please try again.", 500);
+        }
+    };
+
+    updateShop = async (shopId: string, userId: string, data: PatchShopBody, options?: QueryOptions) => {
+        const tx = options?.tx || db;
+        try {
+            const updatedShop = (
+                await db
+                    .update(shops)
+                    .set(data)
+                    .where(and(eq(shops.id, shopId), eq(shops.ownerId, userId)))
+                    .returning()
+            )[0];
+            if (!updatedShop) {
+                return null;
+            }
+            return updatedShop;
+        } catch (error) {
+            console.log(`Error in shops.repository>updateShop, error: ${error}`);
+            throw new AppError("Error occured accessing databsae, please try again.", 500);
         }
     };
 }
