@@ -43,8 +43,79 @@ export const shops = pgTable("shops", {
         .defaultNow()
         .notNull()
         .$onUpdate(() => new Date()),
-    softDelete: boolean("softDelete").default(false),
+    softDelete: boolean("soft_delete").default(false),
 });
+export const roles = pgTable("roles", {
+    id: uuid("id")
+        .primaryKey()
+        .default(sql`uuidv7()`),
+    // null shopId means it's a global/system default role (Owner, Manager, Viewer)
+    // populated shopId means it's a custom role created by a specific shop
+    shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 100 }).notNull(),
+    description: text("description"),
+
+    // Store permission keys directly as a text array!
+    // Example: ["products:create", "products:read", "shop:settings"]
+    permissions: text("permissions")
+        .array()
+        .notNull()
+        .default(sql`'{}'::text[]`),
+
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+});
+
+export const shopManagers = pgTable(
+    "shop_managers",
+    {
+        shopId: uuid("shop_id")
+            .references(() => shops.id, { onDelete: "cascade" })
+            .notNull(),
+        managerId: uuid("manager_id")
+            .references(() => users.id, { onDelete: "cascade" })
+            .notNull(),
+        roleId: uuid("role_id")
+            .references(() => roles.id)
+            .notNull(),
+        invitedByUserId: uuid("invited_by_user_id").references(() => users.id, { onDelete: "set null" }),
+        createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
+    },
+    (table) => [primaryKey({ columns: [table.shopId, table.managerId] })],
+);
+
+export const shopInvitations = pgTable(
+    "shop_invitations",
+    {
+        id: uuid("id")
+            .primaryKey()
+            .default(sql`uuidv7()`),
+        invitedUserId: uuid("invited_user_id")
+            .references(() => users.id, { onDelete: "cascade" })
+            .notNull(),
+        invitedByUserId: uuid("invited_by_user_id")
+            .references(() => users.id, { onDelete: "cascade" })
+            .notNull(),
+        shopId: uuid("shop_id")
+            .references(() => shops.id, { onDelete: "cascade" })
+            .notNull(),
+        roleId: uuid("role_id")
+            .references(() => roles.id)
+            .notNull(),
+        expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true })
+            .default(sql`now() + interval '30 days'`)
+            .notNull(),
+        createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
+    },
+    (table) => [unique("unique_shop_invited_user").on(table.shopId, table.invitedUserId)],
+);
 
 export const products = pgTable(
     "products",
@@ -160,13 +231,57 @@ export const productVariantsAttributeValues = pgTable(
 
 // Relations
 
-export const userRelations = relations(users, ({ many }) => ({ shops: many(shops) }));
+export const userRelations = relations(users, ({ many }) => ({
+    shopsOwned: many(shops),
+    managedShops: many(shopManagers, { relationName: "managerToUser" }),
+    sentManagerInvitations: many(shopManagers, { relationName: "invitedByToUser" }),
+    receivedInvitations: many(shopInvitations, { relationName: "invitedUserToUser" }),
+    sentInvitations: many(shopInvitations, { relationName: "invitedByUserToUser" }),
+}));
 
 export const shopRelations = relations(shops, ({ many, one }) => ({
-    products: many(products),
     owner: one(users, {
         fields: [shops.ownerId],
         references: [users.id],
+    }),
+    products: many(products),
+    attributeNames: many(attributeNames),
+    managers: many(shopManagers),
+    invitations: many(shopInvitations),
+}));
+
+export const shopManagersRelations = relations(shopManagers, ({ one }) => ({
+    shop: one(shops, {
+        fields: [shopManagers.shopId],
+        references: [shops.id],
+    }),
+    manager: one(users, {
+        fields: [shopManagers.managerId],
+        references: [users.id],
+        relationName: "managerToUser",
+    }),
+    invitedBy: one(users, {
+        fields: [shopManagers.invitedByUserId],
+        references: [users.id],
+        relationName: "invitedByToUser",
+    }),
+    role: one(roles, { fields: [shopManagers.roleId], references: [roles.id] }),
+}));
+
+export const shopInvitationsRelations = relations(shopInvitations, ({ one }) => ({
+    shop: one(shops, {
+        fields: [shopInvitations.shopId],
+        references: [shops.id],
+    }),
+    invitedUser: one(users, {
+        fields: [shopInvitations.invitedUserId],
+        references: [users.id],
+        relationName: "invitedUserToUser",
+    }),
+    invitedBy: one(users, {
+        fields: [shopInvitations.invitedByUserId],
+        references: [users.id],
+        relationName: "invitedByUserToUser",
     }),
 }));
 
@@ -207,6 +322,10 @@ export const attributeValuesRelations = relations(attributeValues, ({ one }) => 
 export const attributeNamesRelations = relations(attributeNames, ({ many, one }) => ({
     values: many(attributeValues),
     shop: one(shops, { fields: [attributeNames.shopId], references: [shops.id] }),
+}));
+export const rolesRelations = relations(roles, ({ many, one }) => ({
+    shop: one(shops, { fields: [roles.shopId], references: [shops.id] }),
+    managers: many(shopManagers),
 }));
 
 // TODO: Add indexes later to speed up database
