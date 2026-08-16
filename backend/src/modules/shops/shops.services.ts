@@ -4,6 +4,17 @@ import type { AuthRepository } from "../auth/auth.repository";
 import type { ShopsRepository } from "./shops.repository";
 import type { PatchShopBody } from "./shops.schemas";
 
+interface Shop {
+    id: string;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    ownerId: string;
+    softDelete: boolean;
+    isOwner: boolean;
+    managerPermissions: string[] | null;
+}
+
 export class ShopsServices {
     private shopRepository: ShopsRepository;
     private userRepository: AuthRepository;
@@ -39,17 +50,71 @@ export class ShopsServices {
     };
 
     getUserShops = async (userId: string) => {
-        const shops = await this.shopRepository.getUserShops(userId);
-        return shops;
+        const ownedAndManagedShops = await this.shopRepository.getUserShops(userId);
+        const cleanShops: Shop[] = [];
+        for (let shop of ownedAndManagedShops.shopsOwned) {
+            const cleanShop: Shop = {
+                id: shop.id,
+                name: shop.name,
+                createdAt: shop.createdAt,
+                updatedAt: shop.updatedAt,
+                ownerId: shop.ownerId,
+                softDelete: shop.softDelete,
+                isOwner: true,
+                managerPermissions: null,
+            };
+            cleanShops.push(cleanShop);
+        }
+        for (let { shop, role } of ownedAndManagedShops.managedShops) {
+            const cleanShop: Shop = {
+                id: shop.id,
+                name: shop.name,
+                createdAt: shop.createdAt,
+                updatedAt: shop.updatedAt,
+                ownerId: shop.ownerId,
+                softDelete: shop.softDelete,
+                isOwner: false,
+                managerPermissions: role.permissions,
+            };
+            cleanShops.push(cleanShop);
+        }
+        return cleanShops;
     };
 
     getShop = async (shopId: string, userId: string) => {
         const shop = await this.shopRepository.getShop(shopId);
-        if (!shop) throw new AppError("Shop not found.", 404);
-        if (shop.ownerId !== userId) {
-            throw new AppError("You do not have permission to access this shop.", 403);
+        // User is owner
+        if (shop.ownerId === userId) {
+            const cleanShop: Shop = {
+                id: shop.id,
+                name: shop.name,
+                createdAt: shop.createdAt,
+                updatedAt: shop.updatedAt,
+                ownerId: shop.ownerId,
+                softDelete: shop.softDelete,
+                isOwner: true,
+                managerPermissions: null,
+            };
+            return cleanShop;
         }
-        return shop;
+        // Loop through managers and return if he is one of them
+        for (let manager of shop.managers) {
+            if (manager.managerId === userId) {
+                const cleanShop: Shop = {
+                    id: shop.id,
+                    name: shop.name,
+                    createdAt: shop.createdAt,
+                    updatedAt: shop.updatedAt,
+                    ownerId: shop.ownerId,
+                    softDelete: shop.softDelete,
+                    isOwner: false,
+                    managerPermissions: manager.role.permissions,
+                };
+                return cleanShop;
+            }
+        }
+        // He is not owner or manager so reject
+        throw new AppError("Shop not found", 404);
     };
 
     deleteShop = async (shopId: string, userId: string) => {

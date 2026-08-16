@@ -28,7 +28,7 @@ export class ShopsController {
         const { sessionId, sessionData } = { sessionId: req.sessionId!, sessionData: req.sessionData! };
 
         const shops = await this.shopServices.getUserShops(sessionData.userId);
-        return ApiResponse.success(res, 200, { shops: shops });
+        return ApiResponse.success(res, 200, { shops });
     };
 
     getShop = async (req: Request, res: Response) => {

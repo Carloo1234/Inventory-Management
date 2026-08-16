@@ -43,7 +43,7 @@ export const shops = pgTable("shops", {
         .defaultNow()
         .notNull()
         .$onUpdate(() => new Date()),
-    softDelete: boolean("soft_delete").default(false),
+    softDelete: boolean("soft_delete").notNull().default(false),
 });
 export const roles = pgTable("roles", {
     id: uuid("id")
@@ -53,7 +53,6 @@ export const roles = pgTable("roles", {
     // populated shopId means it's a custom role created by a specific shop
     shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 100 }).notNull(),
-    description: text("description"),
 
     // Store permission keys directly as a text array!
     // Example: ["products:create", "products:read", "shop:settings"]

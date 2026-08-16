@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { db, type QueryOptions } from "../../db";
-import { shops } from "../../db/schema";
+import { shops, users } from "../../db/schema";
 import { AppError } from "../../utils/AppError";
 import type { PatchShopBody } from "./shops.schemas";
 
@@ -23,9 +23,21 @@ export class ShopsRepository {
     getUserShops = async (userId: string, options?: QueryOptions) => {
         const tx = options?.tx || db;
         try {
-            const userShops = await tx.select().from(shops).where(eq(shops.ownerId, userId));
-            return userShops;
+            const ownedAndManagedShops = await tx.query.users.findFirst({
+                where: eq(users.id, userId),
+                columns: {},
+                with: {
+                    shopsOwned: true,
+                    managedShops: { columns: {}, with: { shop: true, role: { columns: { permissions: true } } } },
+                },
+            });
+            if (!ownedAndManagedShops)
+                throw new AppError("Error occured accessing database, make sure your user exists.", 500);
+            return ownedAndManagedShops;
+            // const userShops = await tx.select().from(shops).where(eq(shops.ownerId, userId));
+            // return userShops;
         } catch (error) {
+            if (error instanceof AppError) throw error;
             console.log(`Error in shops.repository>getUserShops, error: ${error}`);
             throw new AppError("Error occured accessing database, please try again.", 500);
         }
@@ -34,14 +46,29 @@ export class ShopsRepository {
     getShop = async (shopId: string, options?: QueryOptions) => {
         const tx = options?.tx || db;
         try {
-            const shop = await tx.select().from(shops).where(eq(shops.id, shopId)).limit(1);
-            if (shop.length <= 0) {
-                return null;
-            }
-            return shop[0];
+            const shop = await tx.query.shops.findFirst({
+                where: eq(shops.id, shopId),
+                with: {
+                    managers: {
+                        columns: {
+                            managerId: true,
+                        },
+                        with: {
+                            role: {
+                                columns: { permissions: true },
+                            },
+                        },
+                    },
+                },
+            });
+            if (!shop) throw new AppError("Shop not found", 404);
+            return shop;
         } catch (error) {
             console.log(`Error in shops.repository>getShop, error: ${error}`);
-            throw new AppError("Error occured accessing databsae, please try again.", 500);
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Error occured accessing database, please try again.", 500);
         }
     };
 
