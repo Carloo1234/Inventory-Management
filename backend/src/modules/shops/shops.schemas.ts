@@ -22,3 +22,14 @@ export const patchShopSchema = z
     .strict();
 
 export type PatchShopBody = z.infer<typeof patchShopSchema>;
+
+export interface Shop {
+    id: string;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    ownerId: string;
+    softDelete: boolean;
+    isOwner: boolean;
+    managerPermissions: string[] | null;
+}

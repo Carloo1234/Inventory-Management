@@ -3,17 +3,7 @@ import { AppError } from "../../utils/AppError";
 import type { AuthRepository } from "../auth/auth.repository";
 import type { ShopsRepository } from "./shops.repository";
 import type { PatchShopBody } from "./shops.schemas";
-
-interface Shop {
-    id: string;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
-    ownerId: string;
-    softDelete: boolean;
-    isOwner: boolean;
-    managerPermissions: string[] | null;
-}
+import type { Shop } from "./shops.schemas";
 
 export class ShopsServices {
     private shopRepository: ShopsRepository;
@@ -82,39 +72,9 @@ export class ShopsServices {
     };
 
     getShop = async (shopId: string, userId: string) => {
-        const shop = await this.shopRepository.getShop(shopId);
-        // User is owner
-        if (shop.ownerId === userId) {
-            const cleanShop: Shop = {
-                id: shop.id,
-                name: shop.name,
-                createdAt: shop.createdAt,
-                updatedAt: shop.updatedAt,
-                ownerId: shop.ownerId,
-                softDelete: shop.softDelete,
-                isOwner: true,
-                managerPermissions: null,
-            };
-            return cleanShop;
-        }
-        // Loop through managers and return if he is one of them
-        for (let manager of shop.managers) {
-            if (manager.managerId === userId) {
-                const cleanShop: Shop = {
-                    id: shop.id,
-                    name: shop.name,
-                    createdAt: shop.createdAt,
-                    updatedAt: shop.updatedAt,
-                    ownerId: shop.ownerId,
-                    softDelete: shop.softDelete,
-                    isOwner: false,
-                    managerPermissions: manager.role.permissions,
-                };
-                return cleanShop;
-            }
-        }
-        // He is not owner or manager so reject
-        throw new AppError("Shop not found", 404);
+        const cleanShop: Shop | null = await this.shopRepository.getUserShop(shopId, userId);
+        if (!cleanShop) throw new AppError("Shop not found", 404);
+        return cleanShop;
     };
 
     deleteShop = async (shopId: string, userId: string) => {

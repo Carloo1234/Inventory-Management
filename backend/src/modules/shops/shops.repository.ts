@@ -72,6 +72,42 @@ export class ShopsRepository {
         }
     };
 
+    getUserShop = async (shopId: string, userId: string, options?: QueryOptions) => {
+        const shop = await this.getShop(shopId, options);
+        // User is owner
+        if (shop.ownerId === userId) {
+            const cleanShop = {
+                id: shop.id,
+                name: shop.name,
+                createdAt: shop.createdAt,
+                updatedAt: shop.updatedAt,
+                ownerId: shop.ownerId,
+                softDelete: shop.softDelete,
+                isOwner: true,
+                managerPermissions: null,
+            };
+            return cleanShop;
+        }
+        // Loop through managers and return if he is one of them
+        for (let manager of shop.managers) {
+            if (manager.managerId === userId) {
+                const cleanShop = {
+                    id: shop.id,
+                    name: shop.name,
+                    createdAt: shop.createdAt,
+                    updatedAt: shop.updatedAt,
+                    ownerId: shop.ownerId,
+                    softDelete: shop.softDelete,
+                    isOwner: false,
+                    managerPermissions: manager.role.permissions,
+                };
+                return cleanShop;
+            }
+        }
+        // He is not owner or manager so reject
+        return null;
+    };
+
     softDeleteShop = async (shopId: string, userId: string, options?: QueryOptions) => {
         const tx = options?.tx || db;
         try {
