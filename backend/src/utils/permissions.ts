@@ -3,9 +3,13 @@ export const PERMISSIONS = {
     SHOP_UPDATE: { value: "shop:update", friendlyName: "Update Shop(s)" },
     SHOP_DELETE: { value: "shop:delete", friendlyName: "Delete Shop" },
     PRODUCT_CREATE: { value: "product:create", friendlyName: "Create Product(s)" },
-    PRODUCT_UPDATE: { value: "product:update", friendlyName: "Update Product(s)" },
     PRODUCT_READ: { value: "product:read", friendlyName: "View Product(s)" },
+    PRODUCT_UPDATE: { value: "product:update", friendlyName: "Update Product(s)" },
     PRODUCT_DELETE: { value: "product:delete", friendlyName: "Delete Product(s)" },
+    ROLES_CREATE: { value: "roles:create", friendlyName: "Create Role(s)" },
+    ROLES_READ: { value: "roles:read", friendlyName: "View Role(s)" },
+    ROLES_UPDATE: { value: "roles:update", friendlyName: "Update Roles(s)" },
+    ROLES_DELETE: { value: "roles:delete", friendlyName: "Delete Role(s)" },
 } as const;
 
 export type PermissionValue = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]["value"];
