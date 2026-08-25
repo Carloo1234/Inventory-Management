@@ -65,3 +65,11 @@ Thumbs.db
 
 # Redis
 dump.rdb
+
+
+
+.vite/
+node_modules
+dist
+dist-ssr
+*.local
