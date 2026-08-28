@@ -25,7 +25,10 @@
         "baseUrl": ".",
         "paths": {
             "@/*": ["./src/*"]
-        }
+        },
+
+        "strictNullChecks": true,
+        "strict": true
     },
     "include": ["src"]
 }

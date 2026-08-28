@@ -4,6 +4,7 @@ import { SessionHandler, type SessionData } from "../utils/redisHandler";
 import { parseTime } from "../utils/generalUtils";
 import { env } from "../config/env";
 import crypto from "node:crypto";
+import { AuthServices } from "../modules/auth/auth.services";
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
     const ip = req.ip;
@@ -119,42 +120,46 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const redirectIfAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
-    const sessionId: string | null = req.cookies.session_id;
+export const redirectIfAuthenticated = (authServices: AuthServices) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        const sessionId: string | null = req.cookies.session_id;
 
-    if (!sessionId) {
-        return next();
-    }
-
-    const sessionData: SessionData | null = await SessionHandler.getSessionData(sessionId);
-    if (!sessionData) {
-        return next();
-    }
-
-    if (sessionData.revoked === "true") {
-        const recentlyRevoked = await SessionHandler.isInRecentlyRevoked(sessionId);
-        if (recentlyRevoked) {
-            // Logged in so redirect
-            return ApiResponse.success(
-                res,
-                200,
-                null,
-                { type: "info", message: "You are already logged in." },
-                { name: "ROOT", params: null },
-            );
+        if (!sessionId) {
+            return next();
         }
 
-        // Not valid
-        res.clearCookie("session_id");
-        return next();
-    }
+        const sessionData: SessionData | null = await SessionHandler.getSessionData(sessionId);
+        if (!sessionData) {
+            return next();
+        }
 
-    // If session data found, that means he is authenticated so redirect
-    return ApiResponse.success(
-        res,
-        200,
-        null,
-        { type: "info", message: "You are already logged in." },
-        { name: "ROOT", params: null },
-    );
+        if (sessionData.revoked === "true") {
+            const recentlyRevoked = await SessionHandler.isInRecentlyRevoked(sessionId);
+            if (recentlyRevoked) {
+                // Logged in so redirect
+                return ApiResponse.success(
+                    res,
+                    200,
+                    null,
+                    { type: "info", message: "You are already logged in." },
+                    { name: "ROOT", params: null },
+                );
+            }
+
+            // Not valid
+            res.clearCookie("session_id");
+            return next();
+        }
+
+        // If session data found, that means he is authenticated so redirect
+        const user = await authServices.me(sessionData);
+        const { passwordHash, ...cleanUser } = user;
+        return ApiResponse.success(
+            res,
+            200,
+            cleanUser,
+            { type: "info", message: "You are already logged in." },
+            { name: "ROOT", params: null },
+        );
+    };
 };

@@ -5,9 +5,17 @@ import authRouter from "./modules/auth/auth.routes";
 import shopsRouter from "./modules/shops/shops.routes";
 import rolesRouter from "./modules/roles/roles.routes";
 import { ErrorHandler } from "./middleware/errorHandler";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 
 const app = express();
+
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        credentials: true,
+    }),
+);
 await connectRedis();
 
 try {

@@ -13,8 +13,8 @@ const hashHandler = new HashHandler();
 const authRepository = new AuthRepository();
 const authServices = new AuthServices(authRepository, hashHandler);
 const authController = new AuthController(authServices);
-router.post("/signup", redirectIfAuthenticated, validateRequest(signupSchema), authController.signup);
-router.post("/signin", redirectIfAuthenticated, validateRequest(signinSchema), authController.signin);
+router.post("/signup", redirectIfAuthenticated(authServices), validateRequest(signupSchema), authController.signup);
+router.post("/signin", redirectIfAuthenticated(authServices), validateRequest(signinSchema), authController.signin);
 router.post("/signout", authenticate, authController.signout);
 
 // /me was made quickly without thought just for testing purposes

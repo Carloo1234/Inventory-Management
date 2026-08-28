@@ -91,7 +91,7 @@ export class AuthServices {
             throw new AppError("We have encoured an error with creating your session. Please try again.", 500);
         }
         // Session created
-        return sessionId;
+        return { sessionId, sessionData };
     };
 
     signout = async (sessionId: string) => {

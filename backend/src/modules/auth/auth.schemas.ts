@@ -2,7 +2,10 @@ import { z } from "zod";
 
 export const signupSchema = z
     .object({
-        name: z.string("Name is required").max(255, "Must be less than 256 characters long"),
+        name: z
+            .string("Name is required")
+            .max(255, "Must be less than 256 characters long")
+            .min(2, "Must be at least 2 characters long"),
         email: z.email("Must be in the format example@mail.com").max(255, "Must be less than 256 characters long"),
         password: z
             .string("Password is required")

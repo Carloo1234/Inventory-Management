@@ -53,17 +53,19 @@ export class AuthController {
     signin = async (req: Request, res: Response) => {
         const { email, password } = req.body;
 
-        const sessionId = await this.services.signin(email, password, req.ip);
+        const { sessionId, sessionData } = await this.services.signin(email, password, req.ip);
         res.cookie("session_id", sessionId, {
             httpOnly: true,
             secure: env.NODE_ENV === "production",
             sameSite: env.COOKIE_SAMESITE,
             maxAge: parseTime(env.SESSION_EXPIRY, "ms")!,
         });
+        const user = await this.services.me(sessionData);
+        const { passwordHash, ...cleanUser } = user;
         ApiResponse.success(
             res,
             201,
-            null,
+            cleanUser,
             { type: "success", message: "Successfully signed in." },
             { name: "ROOT", params: null },
         );
