@@ -10,18 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as HomeRouteImport } from './routes/home'
+import { Route as ShopsRouteRouteImport } from './routes/shops/route'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ShopsIndexRouteImport } from './routes/shops/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HomeRoute = HomeRouteImport.update({
-  id: '/home',
-  path: '/home',
+const ShopsRouteRoute = ShopsRouteRouteImport.update({
+  id: '/shops',
+  path: '/shops',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SigninRoute = SigninRouteImport.update({
@@ -34,37 +35,44 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopsIndexRoute = ShopsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ShopsRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
+  '/shops': typeof ShopsRouteRouteWithChildren
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/shops/': typeof ShopsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/shops': typeof ShopsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
+  '/shops': typeof ShopsRouteRouteWithChildren
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/shops/': typeof ShopsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/home' | '/signin' | '/signup'
+  fullPaths: '/' | '/shops' | '/signin' | '/signup' | '/shops/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/signin' | '/signup'
-  id: '__root__' | '/' | '/home' | '/signin' | '/signup'
+  to: '/' | '/signin' | '/signup' | '/shops'
+  id: '__root__' | '/' | '/shops' | '/signin' | '/signup' | '/shops/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  HomeRoute: typeof HomeRoute
+  ShopsRouteRoute: typeof ShopsRouteRouteWithChildren
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
 }
@@ -78,11 +86,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/home': {
-      id: '/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof HomeRouteImport
+    '/shops': {
+      id: '/shops'
+      path: '/shops'
+      fullPath: '/shops'
+      preLoaderRoute: typeof ShopsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signin': {
@@ -99,12 +107,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shops/': {
+      id: '/shops/'
+      path: '/'
+      fullPath: '/shops/'
+      preLoaderRoute: typeof ShopsIndexRouteImport
+      parentRoute: typeof ShopsRouteRoute
+    }
   }
 }
 
+interface ShopsRouteRouteChildren {
+  ShopsIndexRoute: typeof ShopsIndexRoute
+}
+
+const ShopsRouteRouteChildren: ShopsRouteRouteChildren = {
+  ShopsIndexRoute: ShopsIndexRoute,
+}
+
+const ShopsRouteRouteWithChildren = ShopsRouteRoute._addFileChildren(
+  ShopsRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  HomeRoute: HomeRoute,
+  ShopsRouteRoute: ShopsRouteRouteWithChildren,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
 }

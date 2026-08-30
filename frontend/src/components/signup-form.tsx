@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { handleServerFormErrors } from "@/lib/form-utils";
 import { createResponseSchema, validateDataWithSchema } from "@/lib/response";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@tanstack/react-router";
+import { Link, redirect, useNavigate } from "@tanstack/react-router";
 import axios from "axios";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import z from "zod";
@@ -33,6 +33,7 @@ export const signupSchema = z
 type FormFields = z.infer<typeof signupSchema>;
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
+    const navigate = useNavigate();
     const {
         register,
         handleSubmit,
@@ -47,6 +48,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
             const response = await api.post("/auth/signup", data);
             const responseData = validateDataWithSchema(response.data, createResponseSchema());
             console.log(responseData);
+            navigate({ to: "/" });
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const responseData = validateDataWithSchema(error.response?.data, createResponseSchema());

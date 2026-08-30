@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Link } from "@tanstack/react-router";
+import { Link, redirect, useNavigate } from "@tanstack/react-router";
 import { api } from "@/lib/api";
 import { createResponseSchema, validateDataWithSchema } from "@/lib/response";
 import axios from "axios";
@@ -12,6 +12,7 @@ import { z } from "zod";
 import { handleServerFormErrors } from "@/lib/form-utils";
 import { Spinner } from "./ui/spinner";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
 const userSchema = z.object({
     createdAt: z.string(),
@@ -31,6 +32,7 @@ type FormFields = z.infer<typeof signinSchema>;
 const responseSchema = createResponseSchema(userSchema);
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
+    const navigate = useNavigate();
     const {
         register,
         handleSubmit,
@@ -47,7 +49,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                 password: data.password,
             });
             const responseData = validateDataWithSchema(response.data, responseSchema);
-
+            navigate({ to: "/" });
             console.log(responseData);
             // Redirect to home
         } catch (error) {

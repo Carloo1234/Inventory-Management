@@ -40,6 +40,7 @@ export function createResponseSchema<T extends z.ZodTypeAny>(dataSchema?: T) {
     if (!dataSchema)
         return z.object({
             success: z.boolean(),
+            data: z.any(),
             formErrors: cleanErrorsSchema.nullable(),
             toast: toastSchema.nullable(),
             redirect: redirectSchema.nullable(),
