@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { handleServerFormErrors } from "@/lib/form-utils";
 import { createResponseSchema, validateDataWithSchema } from "@/lib/response";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, redirect, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import axios from "axios";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import z from "zod";

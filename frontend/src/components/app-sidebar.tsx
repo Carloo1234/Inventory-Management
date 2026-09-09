@@ -1,164 +1,93 @@
 "use client";
 
 import * as React from "react";
-
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import { ShopSwitcher } from "@/components/shop-switcher";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
 import {
-    GalleryVerticalEndIcon,
-    AudioLinesIcon,
-    TerminalIcon,
     TerminalSquareIcon,
     BotIcon,
     BookOpenIcon,
     Settings2Icon,
     FrameIcon,
     PieChartIcon,
-    MapIcon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { shopsQueryOptions } from "@/routes/shops/route";
+import { shopsQueryOptions, userQueryOptions } from "@/lib/queries";
+import { useParams } from "@tanstack/react-router";
 
-// This is sample data.
-const data = {
-    user: {
-        name: "shadcn",
-        email: "m@example.com",
-        avatar: "/avatars/shadcn.jpg",
-    },
-    shops: [
+/**
+ * AppSidebar component housing shop switcher, main navigation, projects/shortcuts, and user footer.
+ */
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const { data: shops } = useQuery(shopsQueryOptions);
+    const { data: user } = useQuery(userQueryOptions);
+    const params = useParams({ strict: false }) as { shopId?: string };
+    const currentShopId = params.shopId || (shops && shops[0]?.id);
+
+    // Build dynamic main navigation items using the active shop ID
+    const navMain = [
         {
-            name: "Acme Inc",
-        },
-        {
-            name: "Acme Corp.",
-        },
-        {
-            name: "Evil Corp.",
-        },
-    ],
-    navMain: [
-        {
-            title: "Playground",
-            url: "#",
+            title: "Dashboard",
+            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
             icon: <TerminalSquareIcon />,
             isActive: true,
-            items: [
-                {
-                    title: "History",
-                    url: "#",
-                },
-                {
-                    title: "Starred",
-                    url: "#",
-                },
-                {
-                    title: "Settings",
-                    url: "#",
-                },
-            ],
         },
         {
-            title: "Models",
-            url: "#",
+            title: "Inventory",
+            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
             icon: <BotIcon />,
             items: [
-                {
-                    title: "Genesis",
-                    url: "#",
-                },
-                {
-                    title: "Explorer",
-                    url: "#",
-                },
-                {
-                    title: "Quantum",
-                    url: "#",
-                },
+                { title: "Products", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
+                { title: "Stock Management", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
             ],
         },
         {
-            title: "Documentation",
-            url: "#",
+            title: "Sales & Orders",
+            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
             icon: <BookOpenIcon />,
             items: [
-                {
-                    title: "Introduction",
-                    url: "#",
-                },
-                {
-                    title: "Get Started",
-                    url: "#",
-                },
-                {
-                    title: "Tutorials",
-                    url: "#",
-                },
-                {
-                    title: "Changelog",
-                    url: "#",
-                },
+                { title: "Transactions", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
+                { title: "Reports", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
             ],
         },
         {
             title: "Settings",
-            url: "#",
+            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
             icon: <Settings2Icon />,
             items: [
-                {
-                    title: "General",
-                    url: "#",
-                },
-                {
-                    title: "Team",
-                    url: "#",
-                },
-                {
-                    title: "Billing",
-                    url: "#",
-                },
-                {
-                    title: "Limits",
-                    url: "#",
-                },
+                { title: "General", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
+                { title: "Team & Roles", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
             ],
         },
-    ],
-    projects: [
+    ];
+
+    const projects = [
         {
-            name: "Design Engineering",
-            url: "#",
+            name: "POS Terminal",
+            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
             icon: <FrameIcon />,
         },
         {
-            name: "Sales & Marketing",
-            url: "#",
+            name: "Analytics",
+            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
             icon: <PieChartIcon />,
         },
-        {
-            name: "Travel",
-            url: "#",
-            icon: <MapIcon />,
-        },
-    ],
-};
+    ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const { data: shops } = useQuery(shopsQueryOptions);
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
                 <ShopSwitcher shops={shops} />
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={data.navMain} />
-                <NavProjects projects={data.projects} />
+                <NavMain items={navMain} />
+                <NavProjects projects={projects} />
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={data.user} />
+                <NavUser user={user} />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

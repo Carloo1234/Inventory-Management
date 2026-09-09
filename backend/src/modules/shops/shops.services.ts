@@ -43,6 +43,7 @@ export class ShopsServices {
         const ownedAndManagedShops = await this.shopRepository.getUserShops(userId);
         const cleanShops: Shop[] = [];
         for (let shop of ownedAndManagedShops.shopsOwned) {
+            if (shop.softDelete) continue; // Filter out soft-deleted shops
             const cleanShop: Shop = {
                 id: shop.id,
                 name: shop.name,
@@ -56,6 +57,7 @@ export class ShopsServices {
             cleanShops.push(cleanShop);
         }
         for (let { shop, role } of ownedAndManagedShops.managedShops) {
+            if (shop.softDelete) continue; // Filter out soft-deleted shops
             const cleanShop: Shop = {
                 id: shop.id,
                 name: shop.name,

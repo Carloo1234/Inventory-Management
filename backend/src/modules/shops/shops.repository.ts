@@ -7,7 +7,7 @@ import type { PatchShopBody } from "./shops.schemas";
 export class ShopsRepository {
     getUserShopsCount = async (userId: string, options?: QueryOptions) => {
         const tx = options?.tx || db;
-        const count = await tx.$count(shops, eq(shops.ownerId, userId));
+        const count = await tx.$count(shops, and(eq(shops.ownerId, userId), eq(shops.softDelete, false)));
         return count;
     };
     createShop = async (name: string, ownerId: string, options?: QueryOptions) => {
