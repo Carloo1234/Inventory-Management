@@ -4,7 +4,8 @@
     "description": "A PoS backend system.",
     "main": "index.js",
     "scripts": {
-        "dev": "npx tsx watch --env-file=.env ./src/server.ts"
+        "dev": "npx tsx watch --env-file=.env ./src/server.ts",
+        "test": "node --import tsx --test src/**/*.test.ts"
     },
     "keywords": [],
     "author": "",

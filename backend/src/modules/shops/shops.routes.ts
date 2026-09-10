@@ -8,6 +8,7 @@ import { createShopSchema, patchShopSchema } from "./shops.schemas";
 import { authenticate } from "../../middleware/authentication";
 import { validatePermission } from "../../middleware/validatePermission";
 import { PERMISSIONS } from "../../utils/permissions";
+import rolesRouter from "../roles/roles.routes";
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.patch(
     validateRequest(patchShopSchema),
     shopController.patchShop,
 );
+router.use("/:shopId/roles", rolesRouter);
 
 export default router;

@@ -12,7 +12,7 @@ export const validatePermission = (requiredPermissions: PermissionValue[]) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         const { sessionData } = req;
         const shopId = req.params.shopId;
-
+        console.log(shopId);
         if (!shopId || Array.isArray(shopId)) {
             return ApiResponse.error(res, 400, null, null, { type: "error", message: "Invalid request" });
         }

@@ -1,5 +1,7 @@
+import type z from "zod";
 import { PERMISSIONS } from "../../utils/permissions";
 import type { RolesRepository } from "./roles.repository";
+import type { createRoleSchema, updateRoleSchema } from "./roles.schema";
 
 export class RolesServices {
     private repository: RolesRepository;
@@ -9,5 +11,33 @@ export class RolesServices {
 
     getPermissions = () => {
         return PERMISSIONS;
+    };
+
+    createRole = async ({ data, shopId }: { data: z.infer<typeof createRoleSchema>; shopId: string }) => {
+        const role = await this.repository.createRole({ role: data, shopId });
+        return role;
+    };
+
+    getRoles = async ({ shopId }: { shopId: string }) => {
+        const roles = await this.repository.getRoles({ shopId });
+        return roles;
+    };
+
+    updateRole = async ({
+        data,
+        shopId,
+        roleId,
+    }: {
+        data: z.infer<typeof updateRoleSchema>;
+        shopId: string;
+        roleId: string;
+    }) => {
+        const role = await this.repository.updateRole({ role: data, shopId, roleId });
+        return role;
+    };
+
+    deleteRole = async ({ shopId, roleId }: { shopId: string; roleId: string }) => {
+        const result = await this.repository.deleteRole({ shopId, roleId });
+        return result;
     };
 }

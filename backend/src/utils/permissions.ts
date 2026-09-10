@@ -10,6 +10,10 @@ export const PERMISSIONS = {
     ROLES_READ: { value: "roles:read", friendlyName: "View Role(s)" },
     ROLES_UPDATE: { value: "roles:update", friendlyName: "Update Roles(s)" },
     ROLES_DELETE: { value: "roles:delete", friendlyName: "Delete Role(s)" },
+    INVITE_CREATE: { value: "invite:create", friendlyName: "Create Invite(s)" },
+    INVITE_READ: { value: "invite:read", friendlyName: "View Invite(s)" },
+    INVITE_UPDATE: { value: "invite:update", friendlyName: "Update Invite(s)" },
+    INVITE_DELETE: { value: "invite:delete", friendlyName: "Delete Invite(s)" },
 } as const;
 
 export type PermissionValue = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]["value"];

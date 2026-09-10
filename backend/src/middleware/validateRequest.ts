@@ -10,6 +10,7 @@ export function validateRequest(schema: z.ZodType) {
             next();
         } catch (error) {
             if (error instanceof ZodError) {
+                console.log("Validation error:", error.message);
                 throw FormError.createFromZodError(error);
             }
             throw error;

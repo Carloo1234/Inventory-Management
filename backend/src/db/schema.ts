@@ -74,7 +74,7 @@ export const shopManagers = pgTable(
             .references(() => users.id, { onDelete: "cascade" })
             .notNull(),
         roleId: uuid("role_id")
-            .references(() => roles.id)
+            .references(() => roles.id, { onDelete: "restrict" })
             .notNull(),
         invitedByUserId: uuid("invited_by_user_id").references(() => users.id, { onDelete: "set null" }),
         createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
