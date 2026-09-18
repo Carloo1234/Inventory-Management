@@ -3,7 +3,7 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { getSessionIdAndSessionData } from "../../utils/generalUtils";
 import type { createRoleSchema, updateRoleSchema } from "./roles.schema";
 import type { RolesServices } from "./roles.services";
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 export class RolesController {
     private services: RolesServices;
@@ -42,6 +42,15 @@ export class RolesController {
             return ApiResponse.error(res, 400, null, null, { type: "error", message: "Invalid request" });
 
         const result = await this.services.getRoles({ shopId });
+        return ApiResponse.success(res, 200, result);
+    };
+    getRoleById = async (req: Request, res: Response) => {
+        const { roleId, shopId } = req.params;
+        if (!roleId || Array.isArray(roleId) || !shopId || Array.isArray(shopId))
+            return ApiResponse.error(res, 400, null, null, { type: "error", message: "Invalid request" });
+
+        const result = await this.services.getRoleById(roleId, shopId);
+        if (!result) return ApiResponse.error(res, 404, null, null, { type: "error", message: "Role not found" });
         return ApiResponse.success(res, 200, result);
     };
 

@@ -26,6 +26,10 @@ router.post(
 );
 // Get all roles
 router.get("/", authenticate, validatePermission(["roles:read"]), rolesController.getRoles);
+
+// Get role by ID
+router.get("/:roleId", authenticate, validatePermission(["roles:read"]), rolesController.getRoleById);
+
 // Update role
 router.patch(
     "/:roleId",

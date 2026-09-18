@@ -9,6 +9,7 @@ import { authenticate } from "../../middleware/authentication";
 import { validatePermission } from "../../middleware/validatePermission";
 import { PERMISSIONS } from "../../utils/permissions";
 import rolesRouter from "../roles/roles.routes";
+import invitesRouter from "../invites/invites.routes";
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.patch(
     shopController.patchShop,
 );
 router.use("/:shopId/roles", rolesRouter);
+router.use("/:shopId/invites", invitesRouter);
 
 export default router;

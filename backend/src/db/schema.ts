@@ -282,6 +282,7 @@ export const shopInvitationsRelations = relations(shopInvitations, ({ one }) => 
         references: [users.id],
         relationName: "invitedByUserToUser",
     }),
+    role: one(roles, { fields: [shopInvitations.roleId], references: [roles.id] }),
 }));
 
 export const productsRelations = relations(products, ({ many, one }) => ({

@@ -2,6 +2,7 @@ import type z from "zod";
 import { PERMISSIONS } from "../../utils/permissions";
 import type { RolesRepository } from "./roles.repository";
 import type { createRoleSchema, updateRoleSchema } from "./roles.schema";
+import { AppError } from "../../utils/AppError";
 
 export class RolesServices {
     private repository: RolesRepository;
@@ -23,6 +24,14 @@ export class RolesServices {
         return roles;
     };
 
+    getRoleById = async (roleId: string, shopId: string) => {
+        const role = await this.repository.getRoleById(roleId);
+        if (role.shopId !== shopId) {
+            throw new AppError("Role not found", 404);
+        }
+        return role;
+    };
+
     updateRole = async ({
         data,
         shopId,
@@ -39,5 +48,10 @@ export class RolesServices {
     deleteRole = async ({ shopId, roleId }: { shopId: string; roleId: string }) => {
         const result = await this.repository.deleteRole({ shopId, roleId });
         return result;
+    };
+
+    doesRoleBelongToShop = async ({ roleId, shopId }: { roleId: string; shopId: string }) => {
+        const role = await this.repository.getRoleById(roleId);
+        return role.shopId === shopId;
     };
 }

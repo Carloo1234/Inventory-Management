@@ -3,6 +3,7 @@ import type { createRoleSchema, updateRoleSchema } from "./roles.schema";
 import { db } from "../../db";
 import { roles } from "../../db/schema";
 import { AppError } from "../../utils/AppError";
+import { getPgErrorCode } from "../../utils/db-errors";
 import { and, eq } from "drizzle-orm";
 
 export class RolesRepository {
@@ -31,6 +32,20 @@ export class RolesRepository {
             return data;
         } catch (error) {
             console.error("Error fetching roles:", error);
+            throw new AppError("Failed to fetch roles", 500);
+        }
+    };
+
+    getRoleById = async (roleId: string) => {
+        try {
+            const data = await db.query.roles.findFirst({
+                where: eq(roles.id, roleId),
+            });
+            if (!data) throw new AppError("Role not found", 404);
+            return data;
+        } catch (error) {
+            console.error("Error fetching roles:", error);
+            if (error instanceof AppError) throw error;
             throw new AppError("Failed to fetch roles", 500);
         }
     };
@@ -85,7 +100,7 @@ export class RolesRepository {
             return data[0];
         } catch (error) {
             if (error instanceof AppError) throw error;
-            if (error instanceof Error && "code" in error && error.code === "23503") {
+            if (getPgErrorCode(error) === "23503") {
                 console.error("Error deleting role:", error);
                 throw new AppError("There are managers or invites using this role.", 409);
             }

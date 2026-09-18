@@ -3,14 +3,8 @@ import { users } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { SessionHandler, type SessionData } from "../../utils/redisHandler";
 import { AppError } from "../../utils/AppError";
+import { getPgErrorCode } from "../../utils/db-errors";
 import type { PgSelectBuilder } from "drizzle-orm/pg-core";
-
-interface PgError extends Error {
-    code: string; // PostgreSQL error code (e.g., '23505')
-    detail?: string; // Extra details like the conflicting key
-    table?: string; // Table name
-    constraint?: string; // Specific constraint violated
-}
 
 type UserField = keyof typeof users.$inferSelect;
 
@@ -41,8 +35,7 @@ export class AuthRepository {
             const user = userdb[0]!;
             return user;
         } catch (e) {
-            const error = e as PgError;
-            if (error.code === "23505") {
+            if (getPgErrorCode(e) === "23505") {
                 throw new AppError("User has been created. You issued concurrent requests.", 409);
             }
             throw new AppError("Database error has occured. Please try again later.", 500);

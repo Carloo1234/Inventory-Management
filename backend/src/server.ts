@@ -36,7 +36,6 @@ app.set("trust proxy", env.TRUST_PROXY);
 
 app.use("/auth/", authRouter);
 app.use("/shops/", shopsRouter);
-app.use("/roles/", rolesRouter);
 const errorHandler = new ErrorHandler();
 app.use(errorHandler.handleErrors);
 
