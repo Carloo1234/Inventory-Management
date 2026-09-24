@@ -7,9 +7,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { DeleteShopDialog } from "@/components/delete-shop-dialog";
 
 /**
- * Dynamic shop detail route for `/shops/$shopId` featuring shop metrics and secure management actions.
+ * Shop dashboard page for `/shops/$shopId`.
+ * (Shop data is pre-loaded by the parent `$shopId` layout route.)
  */
-export const Route = createFileRoute("/shops/$shopId")({
+export const Route = createFileRoute("/shops/$shopId/")({
     loader: async ({ context: { queryClient }, params: { shopId } }) => {
         try {
             return await queryClient.query(shopDetailQueryOptions(shopId));
@@ -107,7 +108,8 @@ function ShopDetailComponent() {
                 <CardHeader>
                     <CardTitle className="text-base text-destructive">Danger Zone</CardTitle>
                     <CardDescription>
-                        Deleting this shop will permanently remove all associated point of sale data and cannot be undone.
+                        Deleting this shop will permanently remove all associated point of sale data and cannot be
+                        undone.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center justify-between">

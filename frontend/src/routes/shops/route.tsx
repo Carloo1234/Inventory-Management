@@ -1,17 +1,8 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { shopsQueryOptions } from "@/lib/queries";
-import { createFileRoute, Outlet, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import axios from "axios";
 
 /**
@@ -20,7 +11,7 @@ import axios from "axios";
 export const Route = createFileRoute("/shops")({
     loader: async ({ context: { queryClient } }) => {
         try {
-            return await queryClient.ensureQueryData(shopsQueryOptions);
+            return await queryClient.query(shopsQueryOptions);
         } catch (error) {
             console.log(error);
             if (axios.isAxiosError(error)) {

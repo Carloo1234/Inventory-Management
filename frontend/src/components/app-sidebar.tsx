@@ -2,80 +2,68 @@
 
 import * as React from "react";
 import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import { ShopSwitcher } from "@/components/shop-switcher";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
 import {
-    TerminalSquareIcon,
-    BotIcon,
-    BookOpenIcon,
-    Settings2Icon,
-    FrameIcon,
-    PieChartIcon,
-} from "lucide-react";
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarRail,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { TerminalSquareIcon, BotIcon, UsersIcon, BellIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { shopsQueryOptions, userQueryOptions } from "@/lib/queries";
-import { useParams } from "@tanstack/react-router";
+import { myInvitesQueryOptions, shopsQueryOptions, userQueryOptions } from "@/lib/queries";
+import { Link, useParams } from "@tanstack/react-router";
 
 /**
- * AppSidebar component housing shop switcher, main navigation, projects/shortcuts, and user footer.
+ * AppSidebar: shop switcher, main navigation (Dashboard, Inventory, Team),
+ * personal invites inbox link, and user footer.
+ * Dead placeholder groups (Sales, Shortcuts, Analytics, Settings) were removed.
  */
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { data: shops } = useQuery(shopsQueryOptions);
     const { data: user } = useQuery(userQueryOptions);
+    const { data: myInvites } = useQuery(myInvitesQueryOptions);
     const params = useParams({ strict: false }) as { shopId?: string };
     const currentShopId = params.shopId || (shops && shops[0]?.id);
+    const shopBase = currentShopId ? `/shops/${currentShopId}` : "/shops";
 
-    // Build dynamic main navigation items using the active shop ID
+    // Main navigation: flat links where possible, dropdowns only for
+    // genuinely grouped sections (Inventory, Team).
     const navMain = [
         {
             title: "Dashboard",
-            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
+            url: shopBase,
             icon: <TerminalSquareIcon />,
             isActive: true,
         },
         {
             title: "Inventory",
-            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
+            url: shopBase,
             icon: <BotIcon />,
             items: [
-                { title: "Products", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
-                { title: "Stock Management", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
+                { title: "Products", url: shopBase },
+                { title: "Stock Management", url: shopBase },
             ],
         },
         {
-            title: "Sales & Orders",
-            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
-            icon: <BookOpenIcon />,
+            title: "Team",
+            url: `${shopBase}/roles`,
+            icon: <UsersIcon />,
             items: [
-                { title: "Transactions", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
-                { title: "Reports", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
-            ],
-        },
-        {
-            title: "Settings",
-            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
-            icon: <Settings2Icon />,
-            items: [
-                { title: "General", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
-                { title: "Team & Roles", url: currentShopId ? `/shops/${currentShopId}` : "/shops" },
+                { title: "Roles", url: `${shopBase}/roles` },
+                { title: "Invites", url: `${shopBase}/invites` },
+                { title: "Managers", url: `${shopBase}/managers` },
             ],
         },
     ];
 
-    const projects = [
-        {
-            name: "POS Terminal",
-            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
-            icon: <FrameIcon />,
-        },
-        {
-            name: "Analytics",
-            url: currentShopId ? `/shops/${currentShopId}` : "/shops",
-            icon: <PieChartIcon />,
-        },
-    ];
+    const pendingCount = myInvites?.length ?? 0;
 
     return (
         <Sidebar collapsible="icon" {...props}>
@@ -84,9 +72,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={navMain} />
-                <NavProjects projects={projects} />
             </SidebarContent>
             <SidebarFooter>
+                {/* Personal inbox: visible to everyone, shop-independent. */}
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            tooltip="My Invites"
+                            render={<Link to="/shops/invites" />}
+                        >
+                            <BellIcon />
+                            <span>My Invites</span>
+                            {pendingCount > 0 && (
+                                <Badge variant="default" className="ml-auto">
+                                    {pendingCount}
+                                </Badge>
+                            )}
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
                 <NavUser user={user} />
             </SidebarFooter>
             <SidebarRail />

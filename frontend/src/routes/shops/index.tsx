@@ -7,7 +7,7 @@ import { shopsQueryOptions } from "@/lib/queries";
 export const Route = createFileRoute("/shops/")({
     loader: async ({ context: { queryClient } }) => {
         try {
-            const shops = await queryClient.ensureQueryData(shopsQueryOptions);
+            const shops = await queryClient.query(shopsQueryOptions);
             if (shops && shops.length > 0) {
                 throw redirect({ to: "/shops/$shopId", params: { shopId: shops[0].id } });
             }
