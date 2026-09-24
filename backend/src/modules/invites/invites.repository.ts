@@ -83,6 +83,30 @@ export class InvitesRepository {
         }
     };
 
+    findByUserId = async ({ userId }: { userId: string }) => {
+        try {
+            // Personal inbox: invites addressed to this user across all shops.
+            // No shop scoping here — ownership is the userId itself.
+            const invites = await db.query.shopInvitations.findMany({
+                where: eq(shopInvitations.invitedUserId, userId),
+                with: {
+                    shop: { columns: { id: true, name: true } },
+                    invitedBy: {
+                        columns: { id: true, email: true, name: true, createdAt: true, updatedAt: true },
+                    },
+                    invitedUser: {
+                        columns: { id: true, email: true, name: true, createdAt: true, updatedAt: true },
+                    },
+                    role: { columns: { id: true, name: true, permissions: true, createdAt: true } },
+                },
+            });
+            return invites;
+        } catch (error) {
+            console.error("Error fetching my invites:", error);
+            throw new AppError("Failed to fetch invites", 500);
+        }
+    };
+
     deleteInvite = async ({
         shopId,
         inviteId,

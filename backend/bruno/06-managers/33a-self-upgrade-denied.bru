@@ -1,0 +1,27 @@
+meta {
+  name: Self role upgrade denied
+  type: http
+  seq: 46
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{fourthUserId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "roleId": "{{bigRoleId}}"
+  }
+}
+
+script:post-response {
+  test("403 own role immutable even upwards jar is fourth with manager update so guard not middleware", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

@@ -18,6 +18,13 @@ export class RolesController {
         return ApiResponse.success(res, 200, result);
     };
 
+    getPermissionPresets = (req: Request, res: Response) => {
+        const session = getSessionIdAndSessionData(req, res);
+        if (!session) return;
+        const result = this.services.getPermissionPresets();
+        return ApiResponse.success(res, 200, result);
+    };
+
     createRole = async (req: Request, res: Response) => {
         const { sessionId, sessionData } = { ...getSessionIdAndSessionData(req, res) };
         if (!sessionId || !sessionData)
@@ -75,7 +82,7 @@ export class RolesController {
         if (!shopId || Array.isArray(shopId) || !roleId || Array.isArray(roleId))
             return ApiResponse.error(res, 400, null, null, { type: "error", message: "Invalid request" });
 
-        const result = await this.services.deleteRole({ shopId, roleId });
+        const result = await this.services.deleteRole({ shopId, roleId, callerId: sessionData.userId });
         if (!result) return ApiResponse.error(res, 404, null, null, { type: "error", message: "Role not found" });
         return ApiResponse.success(res, 200, result);
     };

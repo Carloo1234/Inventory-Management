@@ -1,0 +1,30 @@
+meta {
+  name: Owner invites fifth with Limited
+  type: http
+  seq: 57
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{fifthEmail}}",
+    "roleId": "{{limitedRoleId}}"
+  }
+}
+
+script:post-response {
+  test("201 peer setup", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("fifthInviteId", res.body.data.invite.id);
+}

@@ -1,0 +1,21 @@
+meta {
+  name: My inbox contains invite
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/invites/mine
+  auth: none
+}
+
+script:post-response {
+  test("200 inbox with shop and role identity", function() {
+    expect(res.getStatus()).to.equal(200);
+    const found = res.body.data.find(x => x.id === bru.getVar("inviteId"));
+    expect(found, "invite missing from personal inbox").to.not.equal(undefined);
+    expect(found.shopId).to.equal(bru.getVar("shopId"));
+    expect(found.shop.id, "shop identity missing").to.not.equal(undefined);
+    expect(found.role.id, "role identity missing").to.not.equal(undefined);
+  });
+}

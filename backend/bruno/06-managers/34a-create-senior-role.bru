@@ -1,0 +1,30 @@
+meta {
+  name: Owner creates senior role
+  type: http
+  seq: 50
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Senior",
+    "permissions": ["roles:create", "roles:read", "roles:update", "roles:delete", "invite:create", "invite:read", "manager:read", "manager:update", "manager:delete"]
+  }
+}
+
+script:post-response {
+  test("201 strictly above Limited", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("seniorRoleId", res.body.data.id);
+}

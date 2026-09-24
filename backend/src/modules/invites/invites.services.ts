@@ -129,6 +129,40 @@ export class InvitesServices {
         return clean;
     };
 
+    getMyInvites = async ({ userId }: { userId: string }) => {
+        const invites = await this.repository.findByUserId({ userId });
+        // Same cleaning as getInvites plus the shop identity, so the
+        // frontend can render "Shop X invited you as Role Y" with no extra fetch.
+        return invites.map((invite) => ({
+            id: invite.id,
+            shop: invite.shop,
+            invitedBy: {
+                id: invite.invitedBy.id,
+                email: invite.invitedBy.email,
+                name: invite.invitedBy.name,
+                createdAt: invite.invitedBy.createdAt,
+                updatedAt: invite.invitedBy.updatedAt,
+            },
+            invitedUser: {
+                id: invite.invitedUser.id,
+                email: invite.invitedUser.email,
+                name: invite.invitedUser.name,
+                createdAt: invite.invitedUser.createdAt,
+                updatedAt: invite.invitedUser.updatedAt,
+            },
+            role: {
+                id: invite.role.id,
+                name: invite.role.name,
+                permissions: invite.role.permissions,
+                createdAt: invite.role.createdAt,
+            },
+            shopId: invite.shopId,
+            createdAt: invite.createdAt,
+            updatedAt: invite.updatedAt,
+            expiresAt: invite.expiresAt,
+        }));
+    };
+
     deleteInvite = async ({ shopId, inviteId }: { shopId: string; inviteId: string }) => {
         const result = await this.repository.deleteInvite({ shopId, inviteId });
         return result;

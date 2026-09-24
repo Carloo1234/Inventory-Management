@@ -1,0 +1,16 @@
+meta {
+  name: Signout switch session
+  type: http
+  seq: 72
+}
+
+post {
+  url: {{baseUrl}}/auth/signout
+  auth: none
+}
+
+script:post-response {
+  test("200 jar cleared so owner restore actually switches", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

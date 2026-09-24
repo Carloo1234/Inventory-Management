@@ -1,0 +1,16 @@
+meta {
+  name: Fifth self-leaves
+  type: http
+  seq: 71
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{fifthUserId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 peer cleanup", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

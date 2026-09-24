@@ -1,0 +1,27 @@
+meta {
+  name: Owner assigns member senior role
+  type: http
+  seq: 51
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{memberUserId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "roleId": "{{seniorRoleId}}"
+  }
+}
+
+script:post-response {
+  test("200 owner bypasses rank", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,16 @@
+meta {
+  name: Cleanup delete Senior role
+  type: http
+  seq: 87
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/{{seniorRoleId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 no holders left", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -17,13 +17,13 @@ headers {
 body:json {
   {
     "name": "GodMode",
-    "permissions": ["roles:delete"]
+    "permissions": ["shop:delete"]
   }
 }
 
 script:post-response {
   test("403 names offending perm", function() {
     expect(res.getStatus()).to.equal(403);
-    expect(JSON.stringify(res.body)).to.include("roles:delete");
+    expect(JSON.stringify(res.body)).to.include("shop:delete");
   });
 }

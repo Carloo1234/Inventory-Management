@@ -3,6 +3,7 @@ import express from "express";
 import { connectRedis, initSearchIndexes } from "./config/redis";
 import authRouter from "./modules/auth/auth.routes";
 import shopsRouter from "./modules/shops/shops.routes";
+import invitesMineRouter from "./modules/invites/invites.mine.routes";
 import rolesRouter from "./modules/roles/roles.routes";
 import { ErrorHandler } from "./middleware/errorHandler";
 import cors from "cors";
@@ -36,6 +37,7 @@ app.set("trust proxy", env.TRUST_PROXY);
 
 app.use("/auth/", authRouter);
 app.use("/shops/", shopsRouter);
+app.use("/invites", invitesMineRouter);
 const errorHandler = new ErrorHandler();
 app.use(errorHandler.handleErrors);
 

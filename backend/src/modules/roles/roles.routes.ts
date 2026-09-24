@@ -20,6 +20,7 @@ const rolesServices = new RolesServices(rolesRepository, managersRepository, sho
 const rolesController = new RolesController(rolesServices);
 
 router.get("/permissions", authenticate, rolesController.getPermissions);
+router.get("/permission-presets", authenticate, rolesController.getPermissionPresets);
 // Create role
 router.post(
     "/",

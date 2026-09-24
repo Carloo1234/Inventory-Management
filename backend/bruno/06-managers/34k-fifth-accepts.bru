@@ -1,0 +1,18 @@
+meta {
+  name: Fifth accepts peer setup
+  type: http
+  seq: 60
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/{{fifthInviteId}}/accept
+  auth: none
+}
+
+script:post-response {
+  test("201 fifth holds Limited like fourth", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("fifthUserId", res.body.data.manager.managerId);
+}

@@ -52,6 +52,14 @@ export class InvitesController {
         return ApiResponse.success(res, 200, invite);
     };
 
+    getMyInvites = async (req: Request, res: Response) => {
+        const session = getSessionIdAndSessionData(req, res);
+        if (!session) return;
+        // No shop scope, no permission check: your own inbox is always readable.
+        const result = await this.services.getMyInvites({ userId: session.sessionData.userId });
+        return ApiResponse.success(res, 200, result);
+    };
+
     // Revoke an invite
     deleteInvite = async (req: Request, res: Response) => {
         const session = getSessionIdAndSessionData(req, res);

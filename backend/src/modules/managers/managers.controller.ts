@@ -60,20 +60,17 @@ export class ManagersController {
             return ApiResponse.error(res, 400, null, null, { type: "error", message: "Invalid request" });
 
         const callerId = session.sessionData.userId;
-        // Self-leave needs authenticate only. Removing anyone else requires
-        // manager:delete, so run the same middleware manually for that case.
-        // (Route-level validatePermission can't express "self OR permitted".)
-        // A no-op next is passed: on success the middleware just returns, and
-        // calling the real next() here would wrongly continue Express routing
-        // past this handler and risk a double response.
+
+        // If another manager deleting another manager (not a manager trying to leave a shop)
         if (callerId !== managerId) {
+            // Sends error response if manager has no permission to delete managers
             await validatePermission([PERMISSIONS.MANAGER_DELETE.value])(req, res, () => {});
-            // validatePermission responds directly on bad params (400); thrown
-            // 404/403s go to the error handler. If it responded, stop here.
+
+            // If no permission to delete managers, return.
             if (res.headersSent) return;
         }
-
-        const result = await this.services.removeManager({ shopId, managerId });
+        // Here we know that if it is a self delete or if it is a manager deleting another, they are allowed either way.
+        const result = await this.services.removeManager({ shopId, managerId, callerId });
         return ApiResponse.success(res, 200, result);
     };
 }

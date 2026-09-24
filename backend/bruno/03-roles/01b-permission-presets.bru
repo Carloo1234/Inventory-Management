@@ -1,0 +1,20 @@
+meta {
+  name: List permission presets
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/permission-presets
+  auth: none
+}
+
+script:post-response {
+  test("200 presets co-owner manager cashier", function() {
+    expect(res.getStatus()).to.equal(200);
+    const ids = res.body.data.map(p => p.id);
+    expect(ids).to.include("co-owner");
+    expect(ids).to.include("manager");
+    expect(ids).to.include("cashier");
+  });
+}

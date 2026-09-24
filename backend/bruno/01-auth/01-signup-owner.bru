@@ -25,9 +25,10 @@ body:json {
 
 script:pre-request {
   // Unique stamp per run so re-runs never collide on emails or shop names.
-  if (!bru.getVar("stamp")) {
-    bru.setVar("stamp", Date.now().toString(36));
-  }
+  // ALWAYS reset (never only-if-unset): Bruno persists collection variables
+  // between runs, so a conditional would reuse the previous run's stamp and
+  // every signup would 409 as a duplicate.
+  bru.setVar("stamp", Date.now().toString(36));
 }
 
 script:post-response {

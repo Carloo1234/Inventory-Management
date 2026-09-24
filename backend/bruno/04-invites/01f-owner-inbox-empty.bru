@@ -1,0 +1,17 @@
+meta {
+  name: Owner inbox empty
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/invites/mine
+  auth: none
+}
+
+script:post-response {
+  test("200 empty array no invites addressed to owner", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.data).to.deep.equal([]);
+  });
+}

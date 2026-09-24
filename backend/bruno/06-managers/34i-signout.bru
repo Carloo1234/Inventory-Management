@@ -1,0 +1,16 @@
+meta {
+  name: Signout switch session
+  type: http
+  seq: 58
+}
+
+post {
+  url: {{baseUrl}}/auth/signout
+  auth: none
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

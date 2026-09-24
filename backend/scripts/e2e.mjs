@@ -293,6 +293,24 @@ await step("GET invite by id → 200", async () => {
     const r = await owner.req("GET", `/shops/${shopA}/invites/${inviteId}`);
     expectSuccess(r, 200);
 });
+await step("GET /invites/mine as invited user → 200 with shop info", async () => {
+    const r = await member.req("GET", "/invites/mine");
+    expectSuccess(r, 200);
+    const found = r.json.data.find((x) => x.id === inviteId);
+    assert.ok(found, "invite missing from personal inbox");
+    assert.equal(found.shopId, shopA);
+    assert.ok(found.shop?.id, "shop identity missing");
+    assert.ok(found.role?.id, "role identity missing");
+});
+await step("GET /invites/mine as owner (no invites) → 200 empty", async () => {
+    const r = await owner.req("GET", "/invites/mine");
+    expectSuccess(r, 200);
+    assert.deepEqual(r.json.data, []);
+});
+await step("GET /invites/mine anon → 401", async () => {
+    const r = await anon.req("GET", "/invites/mine");
+    expectFailure(r, 401);
+});
 await step("GET invite bad id → 404", async () => {
     const r = await owner.req("GET", `/shops/${shopA}/invites/00000000-0000-0000-0000-000000000000`);
     expectFailure(r, 404);
@@ -407,7 +425,7 @@ await step("expired invite → 400", async () => {
 });
 
 console.log("── Managers ──");
-let staffRoleId, bigRoleId, limitedRoleId, smallRoleId, fourthId, fifthEmail;
+let staffRoleId, bigRoleId, limitedRoleId, smallRoleId, seniorRoleId, fourthId, fifthEmail;
 await step("GET managers list contains member", async () => {
     const r = await owner.req("GET", `/shops/${shopA}/managers`);
     expectSuccess(r, 200);
@@ -489,7 +507,7 @@ await step("subset: role create with unheld perm → 403", async () => {
     fourthId = me.json.data.user.id;
     const rl = await owner.req("POST", `/shops/${shopA}/roles`, {
         name: "Limited",
-        permissions: ["roles:create", "roles:read", "invite:create", "invite:read", "manager:read"],
+        permissions: ["roles:create", "roles:read", "roles:update", "roles:delete", "invite:create", "invite:read", "manager:read", "manager:update"],
     });
     expectSuccess(rl, 201);
     limitedRoleId = rl.json.data.id;
@@ -502,10 +520,10 @@ await step("subset: role create with unheld perm → 403", async () => {
     expectSuccess(acc, 201);
     const bad = await u4.req("POST", `/shops/${shopA}/roles`, {
         name: "GodMode",
-        permissions: ["roles:delete"],
+        permissions: ["shop:delete"],
     });
     expectFailure(bad, 403);
-    assert.ok(JSON.stringify(bad.json).includes("roles:delete"), "403 should name the offending perm");
+    assert.ok(JSON.stringify(bad.json).includes("shop:delete"), "403 should name the offending perm");
     const ok = await u4.req("POST", `/shops/${shopA}/roles`, {
         name: "SmallRole",
         permissions: ["invite:read"],
@@ -547,6 +565,70 @@ await step("subset: manager role escalation → 403", async () => {
     const r = await u4.req("PATCH", `/shops/${shopA}/managers/${mgr.user.id}`, { roleId: bigRoleId });
     expectFailure(r, 403);
 });
+await step("self role upgrade → 403 (own role immutable)", async () => {
+    const u4 = new Client();
+    await u4.req("POST", "/auth/signin", { email: `e2e-fourth-${stamp}@mail.com`, password: PASSWORD });
+    const r = await u4.req("PATCH", `/shops/${shopA}/managers/${fourthId}`, { roleId: bigRoleId });
+    expectFailure(r, 403);
+});
+await step("self role demote → 403 (even downwards)", async () => {
+    const u4 = new Client();
+    await u4.req("POST", "/auth/signin", { email: `e2e-fourth-${stamp}@mail.com`, password: PASSWORD });
+    const r = await u4.req("PATCH", `/shops/${shopA}/managers/${fourthId}`, { roleId: smallRoleId });
+    expectFailure(r, 403);
+});
+await step("rank: junior demotes senior → 403", async () => {
+    // Member holds SeniorRole (Limited + manager:delete): strictly above fourth.
+    const rs = await owner.req("POST", `/shops/${shopA}/roles`, {
+        name: "Senior",
+        permissions: ["roles:create", "roles:read", "roles:update", "roles:delete", "invite:create", "invite:read", "manager:read", "manager:update", "manager:delete"],
+    });
+    expectSuccess(rs, 201);
+    seniorRoleId = rs.json.data.id;
+    const list = await owner.req("GET", `/shops/${shopA}/managers`);
+    const mgr = list.json.data.find((x) => x.user.email === memberEmail);
+    const assign = await owner.req("PATCH", `/shops/${shopA}/managers/${mgr.user.id}`, { roleId: seniorRoleId });
+    expectSuccess(assign, 200);
+    const u4 = new Client();
+    await u4.req("POST", "/auth/signin", { email: `e2e-fourth-${stamp}@mail.com`, password: PASSWORD });
+    const r = await u4.req("PATCH", `/shops/${shopA}/managers/${mgr.user.id}`, { roleId: staffRoleId });
+    expectFailure(r, 403);
+    assert.ok(JSON.stringify(r.json).includes("below your own level"), "rank message missing");
+    const back = await owner.req("PATCH", `/shops/${shopA}/managers/${mgr.user.id}`, { roleId: staffRoleId });
+    expectSuccess(back, 200);
+});
+await step("rank: peer edits peer → 403", async () => {
+    // Fifth accepts Limited: identical set to fourth → peers, untouchable.
+    const inv = await owner.req("POST", `/shops/${shopA}/invites`, { email: fifthEmail, roleId: limitedRoleId });
+    expectSuccess(inv, 201);
+    const u5 = new Client();
+    await u5.req("POST", "/auth/signin", { email: fifthEmail, password: PASSWORD });
+    const acc = await u5.req("POST", `/shops/${shopA}/invites/${inv.json.data.invite.id}/accept`);
+    expectSuccess(acc, 201);
+    const u4 = new Client();
+    await u4.req("POST", "/auth/signin", { email: `e2e-fourth-${stamp}@mail.com`, password: PASSWORD });
+    const r = await u4.req("PATCH", `/shops/${shopA}/managers/${acc.json.data.manager.managerId}`, { roleId: staffRoleId });
+    expectFailure(r, 403);
+});
+await step("rank: rename-only edit of own role → 403", async () => {
+    const u4 = new Client();
+    await u4.req("POST", "/auth/signin", { email: `e2e-fourth-${stamp}@mail.com`, password: PASSWORD });
+    const r = await u4.req("PATCH", `/shops/${shopA}/roles/${limitedRoleId}`, { name: "Limited Renamed" });
+    expectFailure(r, 403);
+});
+await step("rank: delete senior role → 403", async () => {
+    const u4 = new Client();
+    await u4.req("POST", "/auth/signin", { email: `e2e-fourth-${stamp}@mail.com`, password: PASSWORD });
+    const r = await u4.req("DELETE", `/shops/${shopA}/roles/${seniorRoleId}`);
+    expectFailure(r, 403);
+});
+await step("rank: fifth self-leaves, owner removes fifth's trace", async () => {
+    const u5 = new Client();
+    await u5.req("POST", "/auth/signin", { email: fifthEmail, password: PASSWORD });
+    const me = await u5.req("GET", "/auth/me");
+    const leave = await u5.req("DELETE", `/shops/${shopA}/managers/${me.json.data.user.id}`);
+    expectSuccess(leave, 200);
+});
 await step("remove owner target → 400", async () => {
     const me = await owner.req("GET", "/auth/me");
     const r = await owner.req("DELETE", `/shops/${shopA}/managers/${me.json.data.user.id}`);
@@ -575,7 +657,7 @@ await step("self-leave without manager:delete → 200, then locked out", async (
     expectFailure(shop, 404);
 });
 await step("cleanup subset-test roles", async () => {
-    for (const id of [bigRoleId, limitedRoleId, smallRoleId, staffRoleId]) {
+    for (const id of [bigRoleId, limitedRoleId, smallRoleId, staffRoleId, seniorRoleId]) {
         const r = await owner.req("DELETE", `/shops/${shopA}/roles/${id}`);
         expectSuccess(r, 200);
     }

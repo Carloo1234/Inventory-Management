@@ -1,0 +1,16 @@
+meta {
+  name: Signout switch session
+  type: http
+  seq: 48
+}
+
+post {
+  url: {{baseUrl}}/auth/signout
+  auth: none
+}
+
+script:post-response {
+  test("200 session cleared ALWAYS signout before any signup-or-signin-as-someone-else, signin never switches an live session", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

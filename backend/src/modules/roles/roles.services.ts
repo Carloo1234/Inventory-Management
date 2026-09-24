@@ -1,11 +1,12 @@
 import type z from "zod";
 import { PERMISSIONS } from "../../utils/permissions";
+import { ROLE_PRESETS } from "../../utils/role-presets";
 import type { RolesRepository } from "./roles.repository";
 import type { ManagersRepository } from "../managers/managers.repository";
 import type { ShopsRepository } from "../shops/shops.repository";
 import type { createRoleSchema, updateRoleSchema } from "./roles.schema";
 import { AppError } from "../../utils/AppError";
-import { assertGrantable } from "../../utils/grantable";
+import { assertGrantable, assertStrictlyJunior } from "../../utils/grantable";
 
 export class RolesServices {
     private repository: RolesRepository;
@@ -19,6 +20,10 @@ export class RolesServices {
 
     getPermissions = () => {
         return PERMISSIONS;
+    };
+
+    getPermissionPresets = () => {
+        return ROLE_PRESETS;
     };
 
     createRole = async ({
@@ -61,7 +66,10 @@ export class RolesServices {
         callerId: string;
     }) => {
         // Ensure the role exists in this shop first (404 otherwise, thrown inside).
-        await this.getRoleById(roleId, shopId);
+        const current = await this.getRoleById(roleId, shopId);
+        // Rank gate on the CURRENT set: peers, seniors, and your own role are
+        // untouchable — renames included. Self-lockout is structurally impossible.
+        await this.assertCallerManagesRank({ shopId, callerId, targetPermissions: current.permissions });
         // Anti-escalation gate on the new permission set (no-op when omitted).
         if (data.permissions !== undefined) {
             await this.assertCallerMayGrant({ shopId, callerId, targetPermissions: data.permissions });
@@ -72,7 +80,10 @@ export class RolesServices {
         return { role, affectedManagers: { count: managerIds.length, managerIds } };
     };
 
-    deleteRole = async ({ shopId, roleId }: { shopId: string; roleId: string }) => {
+    deleteRole = async ({ shopId, roleId, callerId }: { shopId: string; roleId: string; callerId: string }) => {
+        // Rank gate: deleting a senior's role is the same sabotage as editing it.
+        const current = await this.getRoleById(roleId, shopId);
+        await this.assertCallerManagesRank({ shopId, callerId, targetPermissions: current.permissions });
         const result = await this.repository.deleteRole({ shopId, roleId });
         return result;
     };
@@ -80,6 +91,25 @@ export class RolesServices {
     doesRoleBelongToShop = async ({ roleId, shopId }: { roleId: string; shopId: string }) => {
         const role = await this.repository.getRoleById(roleId);
         return role.shopId === shopId;
+    };
+
+    private assertCallerManagesRank = async ({
+        shopId,
+        callerId,
+        targetPermissions,
+    }: {
+        shopId: string;
+        callerId: string;
+        targetPermissions: string[];
+    }) => {
+        // Same membership lookup as the grant gate; rank rule differs.
+        const caller = await this.shopRepository.getUserShop(shopId, callerId);
+        if (!caller) throw new AppError("You are not a member of this shop", 403);
+        assertStrictlyJunior({
+            callerIsOwner: caller.isOwner,
+            callerPermissions: caller.managerPermissions,
+            targetPermissions,
+        });
     };
 
     private assertCallerMayGrant = async ({

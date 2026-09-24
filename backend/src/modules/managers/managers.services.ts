@@ -4,7 +4,7 @@ import type { RolesServices } from "../roles/roles.services";
 import type { ShopsRepository } from "../shops/shops.repository";
 import type { updateManagerSchema } from "./managers.schema";
 import { AppError } from "../../utils/AppError";
-import { assertGrantable } from "../../utils/grantable";
+import { assertGrantable, assertStrictlyJunior } from "../../utils/grantable";
 
 export class ManagersServices {
     private repository: ManagersRepository;
@@ -51,12 +51,31 @@ export class ManagersServices {
         managerId: string;
         callerId: string;
     }) => {
+        // Guard 0: nobody may change their own role — not an upgrade, not a
+        // demotion. Self-editing bypasses every authorization intuition (who
+        // approves your own promotion?), so it is rejected unconditionally.
+        if (managerId === callerId) {
+            throw new AppError("You cannot change your own role", 403);
+        }
         // Guard 1: target must be a manager of this shop, never the owner.
+        // getUserShop verified: null = non-member, isOwner flag set for owners.
         const target = await this.shopRepository.getUserShop(shopId, managerId);
         if (!target) throw new AppError("Manager not found", 404);
         if (target.isOwner) throw new AppError("Cannot change the role of the shop owner", 400);
 
-        // Guard 2: new role must exist and belong to this shop (404 otherwise, thrown inside).
+        // Guard 2: rank — the target's CURRENT role must be strictly below the
+        // caller's. Demoting a senior (or peer) is rejected even when the new
+        // role itself would pass the grant gate below.
+        const current = await this.getManagerById({ shopId, managerId });
+        const callerForRank = await this.shopRepository.getUserShop(shopId, callerId);
+        if (!callerForRank) throw new AppError("You are not a member of this shop", 403);
+        assertStrictlyJunior({
+            callerIsOwner: callerForRank.isOwner,
+            callerPermissions: callerForRank.managerPermissions,
+            targetPermissions: current.role.permissions,
+        });
+
+        // Guard 3: new role must exist and belong to this shop (404 otherwise, thrown inside).
         const newRole = await this.rolesServices.getRoleById(data.roleId, shopId);
 
         // Guard 3: Make sure manager isnt updating other manager role to include more permissions than he does
@@ -72,11 +91,32 @@ export class ManagersServices {
         return this.repository.updateManagerRole({ shopId, managerId, roleId: data.roleId });
     };
 
-    removeManager = async ({ shopId, managerId }: { shopId: string; managerId: string }) => {
+    removeManager = async ({
+        shopId,
+        managerId,
+        callerId,
+    }: {
+        shopId: string;
+        managerId: string;
+        callerId: string;
+    }) => {
         // Controller checks everything related to self manager remove or not and checks permission if not self delete but not owner
         const target = await this.shopRepository.getUserShop(shopId, managerId);
         if (!target) throw new AppError("Manager not found", 404);
         if (target.isOwner) throw new AppError("Cannot remove the shop owner", 400);
+
+        // Rank gate for admin removals: seniors and peers are untouchable.
+        // Self-leave skips it — leaving is not managing someone.
+        if (managerId !== callerId) {
+            const current = await this.getManagerById({ shopId, managerId });
+            const caller = await this.shopRepository.getUserShop(shopId, callerId);
+            if (!caller) throw new AppError("You are not a member of this shop", 403);
+            assertStrictlyJunior({
+                callerIsOwner: caller.isOwner,
+                callerPermissions: caller.managerPermissions,
+                targetPermissions: current.role.permissions,
+            });
+        }
 
         return this.repository.removeManager({ shopId, managerId });
     };

@@ -1,0 +1,16 @@
+meta {
+  name: Delete senior role denied
+  type: http
+  seq: 65
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/{{seniorRoleId}}
+  auth: none
+}
+
+script:post-response {
+  test("403 deleting senior role is same sabotage", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

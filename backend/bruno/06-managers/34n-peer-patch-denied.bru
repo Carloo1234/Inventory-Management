@@ -1,0 +1,27 @@
+meta {
+  name: Peer edits peer denied
+  type: http
+  seq: 63
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{fifthUserId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "roleId": "{{staffRoleId}}"
+  }
+}
+
+script:post-response {
+  test("403 equal sets untouchable", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

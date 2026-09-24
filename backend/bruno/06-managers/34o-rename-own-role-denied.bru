@@ -1,0 +1,27 @@
+meta {
+  name: Rename own held role denied
+  type: http
+  seq: 64
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/{{limitedRoleId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Limited Renamed"
+  }
+}
+
+script:post-response {
+  test("403 rename-only still blocked self-lockout structurally impossible", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

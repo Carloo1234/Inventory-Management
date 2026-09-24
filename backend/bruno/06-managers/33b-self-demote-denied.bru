@@ -1,0 +1,27 @@
+meta {
+  name: Self role demote denied
+  type: http
+  seq: 47
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{fourthUserId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "roleId": "{{smallRoleId}}"
+  }
+}
+
+script:post-response {
+  test("403 own role immutable even downwards SmallRole is a subset so only self-guard blocks", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}
