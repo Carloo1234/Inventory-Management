@@ -1,0 +1,16 @@
+meta {
+  name: Member get shop forbidden
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}
+  auth: none
+}
+
+script:post-response {
+  test("404 non-member jar is still the member from previous signup", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Cross-shop patch role
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopBId}}/roles/{{roleId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Hijacked"
+  }
+}
+
+script:post-response {
+  test("404 no cross-shop write", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

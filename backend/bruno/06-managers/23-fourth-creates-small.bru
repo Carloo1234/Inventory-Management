@@ -1,0 +1,30 @@
+meta {
+  name: Fourth creates subset role allowed
+  type: http
+  seq: 30
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "SmallRole",
+    "permissions": ["invite:read"]
+  }
+}
+
+script:post-response {
+  test("201 subset allowed", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("smallRoleId", res.body.data.id);
+}

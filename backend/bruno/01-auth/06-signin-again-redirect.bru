@@ -1,0 +1,29 @@
+meta {
+  name: Signin while authenticated redirects
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/auth/signin
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "bruno-owner-{{stamp}}@mail.com",
+    "password": "Password1"
+  }
+}
+
+script:post-response {
+  test("200 already logged in redirect", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.redirect.name).to.equal("ROOT");
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Signup fourth user subset tests
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/auth/signup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Fourth",
+    "email": "bruno-fourth-{{stamp}}@mail.com",
+    "password": "Password1",
+    "confirm": "Password1"
+  }
+}
+
+script:post-response {
+  test("201 jar now fourth", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("fourthEmail", `bruno-fourth-${bru.getVar("stamp")}@mail.com`);
+}

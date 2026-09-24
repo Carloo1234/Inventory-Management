@@ -1,0 +1,17 @@
+meta {
+  name: Member accepts own invite
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/{{acceptInviteId}}/accept
+  auth: none
+}
+
+script:post-response {
+  test("201 manager row", function() {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.body.data.shopId).to.equal(bru.getVar("shopId"));
+  });
+}

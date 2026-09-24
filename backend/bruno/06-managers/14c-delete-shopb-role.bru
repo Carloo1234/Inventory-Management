@@ -1,0 +1,16 @@
+meta {
+  name: Helper delete shop B role
+  type: http
+  seq: 18
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopBId}}/roles/{{shopBRoleId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 helper cleanup", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

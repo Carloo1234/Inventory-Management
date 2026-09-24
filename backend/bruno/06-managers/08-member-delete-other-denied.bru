@@ -1,0 +1,16 @@
+meta {
+  name: Member delete other manager denied
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{ownerId}}
+  auth: none
+}
+
+script:post-response {
+  test("400 or 403 never deletes owner", function() {
+    expect(res.getStatus()).to.be.oneOf([400, 403]);
+  });
+}

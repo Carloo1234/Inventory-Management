@@ -1,0 +1,16 @@
+meta {
+  name: Removed manager gone
+  type: http
+  seq: 50
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{memberUserId}}
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

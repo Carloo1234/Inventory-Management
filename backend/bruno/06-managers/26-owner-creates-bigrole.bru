@@ -1,0 +1,30 @@
+meta {
+  name: Owner creates powerful role
+  type: http
+  seq: 35
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "BigRole",
+    "permissions": ["manager:delete"]
+  }
+}
+
+script:post-response {
+  test("201 owner bypasses gate", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("bigRoleId", res.body.data.id);
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Fourth creates godmode role denied
+  type: http
+  seq: 29
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "GodMode",
+    "permissions": ["roles:delete"]
+  }
+}
+
+script:post-response {
+  test("403 names offending perm", function() {
+    expect(res.getStatus()).to.equal(403);
+    expect(JSON.stringify(res.body)).to.include("roles:delete");
+  });
+}

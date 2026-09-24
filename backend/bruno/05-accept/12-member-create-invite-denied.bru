@@ -1,0 +1,28 @@
+meta {
+  name: Member create invite denied
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "bruno-member-{{stamp}}@mail.com",
+    "roleId": "{{acceptRoleId}}"
+  }
+}
+
+script:post-response {
+  test("403 lacks invite create", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Create shop A
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/shops/
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Shop A {{stamp}}"
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

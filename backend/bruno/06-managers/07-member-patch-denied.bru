@@ -1,0 +1,27 @@
+meta {
+  name: Member patch manager denied
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{memberUserId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "roleId": "{{acceptRoleId}}"
+  }
+}
+
+script:post-response {
+  test("403 lacks manager update", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

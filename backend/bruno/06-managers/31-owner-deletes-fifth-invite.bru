@@ -1,0 +1,16 @@
+meta {
+  name: Owner deletes fifth invite helper
+  type: http
+  seq: 42
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/{{fifthInviteId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 helper cleanup", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

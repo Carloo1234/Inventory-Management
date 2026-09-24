@@ -1,0 +1,27 @@
+meta {
+  name: Invite missing roleId
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "bruno-member-{{stamp}}@mail.com"
+  }
+}
+
+script:post-response {
+  test("400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

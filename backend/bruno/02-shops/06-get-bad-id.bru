@@ -1,0 +1,16 @@
+meta {
+  name: Get shop bad id
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/shops/00000000-0000-0000-0000-000000000000
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

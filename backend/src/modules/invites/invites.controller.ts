@@ -79,9 +79,14 @@ export class InvitesController {
             userId: session.sessionData.userId,
         });
 
-        return ApiResponse.success(res, 201, manager, {
-            type: "success",
-            message: `Invite accepted, you are now a manager of this shop.`,
-        });
+        return ApiResponse.success(
+            res,
+            201,
+            { manager, inviteId: invite.id, shopId: invite.shopId },
+            {
+                type: "success",
+                message: `Invite accepted, you are now a manager of this shop.`,
+            },
+        );
     };
 }

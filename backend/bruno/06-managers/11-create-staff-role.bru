@@ -1,0 +1,30 @@
+meta {
+  name: Create Staff role
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Staff",
+    "permissions": ["manager:read"]
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("staffRoleId", res.body.data.id);
+}

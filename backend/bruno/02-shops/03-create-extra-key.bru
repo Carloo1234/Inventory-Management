@@ -1,0 +1,28 @@
+meta {
+  name: Create shop extra key strict
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/shops/
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "X",
+    "ownerId": "evil"
+  }
+}
+
+script:post-response {
+  test("400 strict mode", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

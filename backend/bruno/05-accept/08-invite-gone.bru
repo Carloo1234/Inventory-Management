@@ -1,0 +1,16 @@
+meta {
+  name: Accepted invite gone
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/{{acceptInviteId}}
+  auth: none
+}
+
+script:post-response {
+  test("404 consumed", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

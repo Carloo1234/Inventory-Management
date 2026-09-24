@@ -1,0 +1,16 @@
+meta {
+  name: Get role bad id
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/00000000-0000-0000-0000-000000000000
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

@@ -1,0 +1,16 @@
+meta {
+  name: Accept bad invite id
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/00000000-0000-0000-0000-000000000000/accept
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

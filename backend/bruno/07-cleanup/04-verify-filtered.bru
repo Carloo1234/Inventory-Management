@@ -1,0 +1,19 @@
+meta {
+  name: Verify shop B filtered shop A kept
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/shops/my-shops
+  auth: none
+}
+
+script:post-response {
+  test("200 B gone A kept", function() {
+    expect(res.getStatus()).to.equal(200);
+    const ids = res.body.data.shops.map(s => s.id);
+    expect(ids).to.not.include(bru.getVar("shopBId"));
+    expect(ids).to.include(bru.getVar("shopId"));
+  });
+}

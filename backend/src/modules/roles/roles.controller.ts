@@ -30,7 +30,7 @@ export class RolesController {
             return ApiResponse.error(res, 400, null, null, { type: "error", message: "Invalid request" });
 
         const data: z.infer<typeof createRoleSchema> = req.body;
-        const result = await this.services.createRole({ data, shopId });
+        const result = await this.services.createRole({ data, shopId, callerId: sessionData.userId });
         return ApiResponse.success(res, 201, result);
     };
 
@@ -62,7 +62,8 @@ export class RolesController {
             return ApiResponse.error(res, 400, null, null, { type: "error", message: "Invalid request" });
 
         const data: z.infer<typeof updateRoleSchema> = req.body;
-        const result = await this.services.updateRole({ data, shopId, roleId });
+        // Response shape: { role, affectedManagers: { count, managerIds } }.
+        const result = await this.services.updateRole({ data, shopId, roleId, callerId: sessionData.userId });
         if (!result) return ApiResponse.error(res, 404, null, null, { type: "error", message: "Role not found" });
         return ApiResponse.success(res, 200, result);
     };

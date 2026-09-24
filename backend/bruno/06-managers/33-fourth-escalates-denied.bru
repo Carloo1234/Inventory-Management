@@ -1,0 +1,27 @@
+meta {
+  name: Fourth escalates member denied
+  type: http
+  seq: 45
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{memberUserId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "roleId": "{{bigRoleId}}"
+  }
+}
+
+script:post-response {
+  test("403 no escalation through reassignment", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Fourth invites with unheld perm denied
+  type: http
+  seq: 38
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{fifthEmail}}",
+    "roleId": "{{bigRoleId}}"
+  }
+}
+
+script:post-response {
+  test("403 names offending perm", function() {
+    expect(res.getStatus()).to.equal(403);
+    expect(JSON.stringify(res.body)).to.include("manager:delete");
+  });
+}

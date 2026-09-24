@@ -1,0 +1,28 @@
+meta {
+  name: Invite unknown email
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "nobody-{{stamp}}@mail.com",
+    "roleId": "{{roleId}}"
+  }
+}
+
+script:post-response {
+  test("404 field error", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

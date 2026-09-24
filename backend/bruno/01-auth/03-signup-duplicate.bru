@@ -1,0 +1,30 @@
+meta {
+  name: Signup duplicate email logged out
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/signup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Dup",
+    "email": "bruno-owner-{{stamp}}@mail.com",
+    "password": "Password1",
+    "confirm": "Password1"
+  }
+}
+
+script:post-response {
+  test("rejected with 4xx", function() {
+    expect(res.getStatus()).to.be.within(400, 499);
+  });
+}

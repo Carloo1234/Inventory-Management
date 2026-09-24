@@ -1,0 +1,16 @@
+meta {
+  name: Signout before fourth switch
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/auth/signout
+  auth: none
+}
+
+script:post-response {
+  test("200 jar cleared so signin-fourth actually switches", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

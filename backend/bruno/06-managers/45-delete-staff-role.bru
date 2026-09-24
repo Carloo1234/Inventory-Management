@@ -1,0 +1,16 @@
+meta {
+  name: Cleanup delete Staff role
+  type: http
+  seq: 60
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/{{staffRoleId}}
+  auth: none
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

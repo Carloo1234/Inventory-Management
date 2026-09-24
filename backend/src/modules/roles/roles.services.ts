@@ -1,20 +1,37 @@
 import type z from "zod";
 import { PERMISSIONS } from "../../utils/permissions";
 import type { RolesRepository } from "./roles.repository";
+import type { ManagersRepository } from "../managers/managers.repository";
+import type { ShopsRepository } from "../shops/shops.repository";
 import type { createRoleSchema, updateRoleSchema } from "./roles.schema";
 import { AppError } from "../../utils/AppError";
+import { assertGrantable } from "../../utils/grantable";
 
 export class RolesServices {
     private repository: RolesRepository;
-    constructor(repository: RolesRepository) {
+    private managersRepository: ManagersRepository;
+    private shopRepository: ShopsRepository;
+    constructor(repository: RolesRepository, managersRepository: ManagersRepository, shopRepository: ShopsRepository) {
         this.repository = repository;
+        this.managersRepository = managersRepository;
+        this.shopRepository = shopRepository;
     }
 
     getPermissions = () => {
         return PERMISSIONS;
     };
 
-    createRole = async ({ data, shopId }: { data: z.infer<typeof createRoleSchema>; shopId: string }) => {
+    createRole = async ({
+        data,
+        shopId,
+        callerId,
+    }: {
+        data: z.infer<typeof createRoleSchema>;
+        shopId: string;
+        callerId: string;
+    }) => {
+        // Anti-escalation gate: caller may only create roles with permissions they hold.
+        await this.assertCallerMayGrant({ shopId, callerId, targetPermissions: data.permissions ?? [] });
         const role = await this.repository.createRole({ role: data, shopId });
         return role;
     };
@@ -36,13 +53,23 @@ export class RolesServices {
         data,
         shopId,
         roleId,
+        callerId,
     }: {
         data: z.infer<typeof updateRoleSchema>;
         shopId: string;
         roleId: string;
+        callerId: string;
     }) => {
+        // Ensure the role exists in this shop first (404 otherwise, thrown inside).
+        await this.getRoleById(roleId, shopId);
+        // Anti-escalation gate on the new permission set (no-op when omitted).
+        if (data.permissions !== undefined) {
+            await this.assertCallerMayGrant({ shopId, callerId, targetPermissions: data.permissions });
+        }
         const role = await this.repository.updateRole({ role: data, shopId, roleId });
-        return role;
+        // Who is affected: managers currently holding this role, for frontend warning.
+        const managerIds = await this.managersRepository.countByRoleId({ shopId, roleId });
+        return { role, affectedManagers: { count: managerIds.length, managerIds } };
     };
 
     deleteRole = async ({ shopId, roleId }: { shopId: string; roleId: string }) => {
@@ -53,5 +80,26 @@ export class RolesServices {
     doesRoleBelongToShop = async ({ roleId, shopId }: { roleId: string; shopId: string }) => {
         const role = await this.repository.getRoleById(roleId);
         return role.shopId === shopId;
+    };
+
+    private assertCallerMayGrant = async ({
+        shopId,
+        callerId,
+        targetPermissions,
+    }: {
+        shopId: string;
+        callerId: string;
+        targetPermissions: string[];
+    }) => {
+        // getUserShop verified: owner row has isOwner + null perms, managers
+        // carry live permissions, null = non-member (unreachable here since
+        // route middleware already enforced membership, but stay defensive).
+        const caller = await this.shopRepository.getUserShop(shopId, callerId);
+        if (!caller) throw new AppError("You are not a member of this shop", 403);
+        assertGrantable({
+            callerIsOwner: caller.isOwner,
+            callerPermissions: caller.managerPermissions,
+            targetPermissions,
+        });
     };
 }

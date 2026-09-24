@@ -2,6 +2,8 @@ import { Router } from "express";
 import { RolesRepository } from "./roles.repository";
 import { RolesServices } from "./roles.services";
 import { RolesController } from "./roles.controller";
+import { ManagersRepository } from "../managers/managers.repository";
+import { ShopsRepository } from "../shops/shops.repository";
 import { authenticate } from "../../middleware/authentication";
 import { validatePermission } from "../../middleware/validatePermission";
 import { validateRequest } from "../../middleware/validateRequest";
@@ -12,7 +14,9 @@ import { createRoleSchema, updateRoleSchema } from "./roles.schema";
 const router = Router({ mergeParams: true });
 
 const rolesRepository = new RolesRepository();
-const rolesServices = new RolesServices(rolesRepository);
+const managersRepository = new ManagersRepository();
+const shopsRepository = new ShopsRepository();
+const rolesServices = new RolesServices(rolesRepository, managersRepository, shopsRepository);
 const rolesController = new RolesController(rolesServices);
 
 router.get("/permissions", authenticate, rolesController.getPermissions);

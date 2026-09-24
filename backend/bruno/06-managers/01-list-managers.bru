@@ -1,0 +1,22 @@
+meta {
+  name: List managers contains member
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/managers
+  auth: none
+}
+
+script:post-response {
+  test("200 contains member", function() {
+    expect(res.getStatus()).to.equal(200);
+    const found = res.body.data.find(x => x.user.email === `bruno-member-${bru.getVar("stamp")}@mail.com`);
+    expect(found, "member missing").to.not.equal(undefined);
+    expect(found.role.id).to.equal(bru.getVar("acceptRoleId"));
+  });
+
+  const found = res.body.data.find(x => x.user.email === `bruno-member-${bru.getVar("stamp")}@mail.com`);
+  bru.setVar("memberUserId", found.user.id);
+}

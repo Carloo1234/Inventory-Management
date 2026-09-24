@@ -1,0 +1,27 @@
+meta {
+  name: Rename shop
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Shop A Renamed {{stamp}}"
+  }
+}
+
+script:post-response {
+  test("200 renamed", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

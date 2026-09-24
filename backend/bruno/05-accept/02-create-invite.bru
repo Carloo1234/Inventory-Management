@@ -1,0 +1,30 @@
+meta {
+  name: Invite member again
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "bruno-member-{{stamp}}@mail.com",
+    "roleId": "{{acceptRoleId}}"
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("acceptInviteId", res.body.data.invite.id);
+}

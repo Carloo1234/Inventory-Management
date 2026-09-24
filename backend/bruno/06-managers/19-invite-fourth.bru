@@ -1,0 +1,30 @@
+meta {
+  name: Invite fourth with limited role
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{fourthEmail}}",
+    "roleId": "{{limitedRoleId}}"
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("fourthInviteId", res.body.data.invite.id);
+}

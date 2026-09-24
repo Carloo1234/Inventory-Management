@@ -1,0 +1,30 @@
+meta {
+  name: Create Cashier role
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Cashier",
+    "permissions": ["roles:read", "product:read"]
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("roleId", res.body.data.id);
+}

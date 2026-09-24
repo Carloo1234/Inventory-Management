@@ -1,0 +1,19 @@
+meta {
+  name: Member sees shop as non-owner
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 non-owner with permissions", function() {
+    expect(res.getStatus()).to.equal(200);
+    const shop = res.body.data.shopData || res.body.data.shop || res.body.data;
+    expect(shop.isOwner).to.equal(false);
+    expect(shop.managerPermissions).to.include("invite:read");
+  });
+}

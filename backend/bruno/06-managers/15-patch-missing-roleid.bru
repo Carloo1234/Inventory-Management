@@ -1,0 +1,24 @@
+meta {
+  name: Patch manager missing roleId
+  type: http
+  seq: 19
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{memberUserId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+}
+
+script:post-response {
+  test("400 validation", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

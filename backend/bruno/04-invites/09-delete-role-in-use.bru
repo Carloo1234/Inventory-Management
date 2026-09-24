@@ -1,0 +1,16 @@
+meta {
+  name: Delete role in use by invite
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/{{roleId}}
+  auth: none
+}
+
+script:post-response {
+  test("409 FK guard", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+}

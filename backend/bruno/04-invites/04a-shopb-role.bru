@@ -1,0 +1,29 @@
+meta {
+  name: Helper create shop B role
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopBId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "OtherShopRole"
+  }
+}
+
+script:post-response {
+  test("201 helper", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("otherRoleId", res.body.data.id);
+}

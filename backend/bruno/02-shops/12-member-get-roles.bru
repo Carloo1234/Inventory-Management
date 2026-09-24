@@ -1,0 +1,16 @@
+meta {
+  name: Member get roles forbidden
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  auth: none
+}
+
+script:post-response {
+  test("404 non-member", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

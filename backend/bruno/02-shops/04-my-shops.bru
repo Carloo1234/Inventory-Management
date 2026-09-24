@@ -1,0 +1,23 @@
+meta {
+  name: List my shops
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/shops/my-shops
+  auth: none
+}
+
+script:post-response {
+  test("200 with shop A, none soft-deleted", function() {
+    expect(res.getStatus()).to.equal(200);
+    const shops = res.body.data.shops;
+    const found = shops.find(s => s.name === `Bruno Shop A ${bru.getVar("stamp")}`);
+    expect(found, "shop A missing").to.not.equal(undefined);
+    expect(shops.every(s => s.softDelete === false)).to.equal(true);
+  });
+
+  const shops = res.body.data.shops;
+  bru.setVar("shopId", shops.find(s => s.name === `Bruno Shop A ${bru.getVar("stamp")}`).id);
+}

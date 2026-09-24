@@ -1,0 +1,30 @@
+meta {
+  name: Signup bad payload
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/signup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "X",
+    "email": "not-an-email",
+    "password": "short",
+    "confirm": "short"
+  }
+}
+
+script:post-response {
+  test("400 validation", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

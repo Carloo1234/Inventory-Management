@@ -1,0 +1,28 @@
+meta {
+  name: Create role bad permission
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bad",
+    "permissions": ["admin:everything"]
+  }
+}
+
+script:post-response {
+  test("400 enum reject", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

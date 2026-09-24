@@ -1,0 +1,19 @@
+meta {
+  name: Save shop B id
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/shops/my-shops
+  auth: none
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  const shops = res.body.data.shops;
+  bru.setVar("shopBId", shops.find(s => s.name === `Bruno Shop B ${bru.getVar("stamp")}`).id);
+}

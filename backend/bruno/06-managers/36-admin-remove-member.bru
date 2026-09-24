@@ -1,0 +1,16 @@
+meta {
+  name: Admin removes member
+  type: http
+  seq: 49
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{memberUserId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 removed", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

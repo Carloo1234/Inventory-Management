@@ -1,0 +1,34 @@
+meta {
+  name: Signup member second user
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/auth/signup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Member",
+    "email": "bruno-member-{{stamp}}@mail.com",
+    "password": "Password1",
+    "confirm": "Password1"
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  // NOTE: this request runs in the OWNER cookie jar, so the session is now
+  // the member's. Re-signin as owner in the next request to restore it.
+  bru.setVar("memberEmail", `bruno-member-${bru.getVar("stamp")}@mail.com`);
+}

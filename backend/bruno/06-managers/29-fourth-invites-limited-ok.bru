@@ -1,0 +1,30 @@
+meta {
+  name: Fourth invites subset role allowed
+  type: http
+  seq: 39
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{fifthEmail}}",
+    "roleId": "{{limitedRoleId}}"
+  }
+}
+
+script:post-response {
+  test("201 subset allowed", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("fifthInviteId", res.body.data.invite.id);
+}

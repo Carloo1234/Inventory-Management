@@ -3,11 +3,10 @@ import type { InvitesRepository } from "./invites.repository";
 import type { createInviteSchema } from "./invites.schema";
 import type { AuthRepository } from "../auth/auth.repository";
 import { AppError, FormError } from "../../utils/AppError";
-import { create } from "node:domain";
 import type { RolesServices } from "../roles/roles.services";
-import e from "express";
 import type { ShopsRepository } from "../shops/shops.repository";
 import type { ManagersRepository } from "../managers/managers.repository";
+import { assertGrantable } from "../../utils/grantable";
 import { db } from "../../db";
 
 export class InvitesServices {
@@ -49,11 +48,27 @@ export class InvitesServices {
                 fieldErrors: { email: ["User with this email does not exist"] },
             });
 
-        // Make sure role belongs to shop
+        // Make sure role belongs to shop: 404 when missing entirely, 400 when
+        // it exists under a different shop (preserves the historical contract;
+        // doesRoleBelongToShop verified to behave exactly this way).
         const roleBelongsToShop = await this.rolesServices.doesRoleBelongToShop({ roleId, shopId });
         if (!roleBelongsToShop) {
             throw new AppError("Role does not belong to this shop", 400);
         }
+        // Full row for the anti-escalation gate below. Guaranteed hit here.
+        // Note: role deletion while an invite references it is blocked by the
+        // FK restrict constraint, so this row cannot vanish mid-flow.
+        const targetRole = await this.rolesServices.getRoleById(roleId, shopId);
+
+        // Anti-escalation gate: inviter may only grant permissions they hold.
+        // getUserShop verified: owner row carries isOwner + null perms.
+        const inviter = await this.shopRepository.getUserShop(shopId, invitedByUserId);
+        if (!inviter) throw new AppError("You are not a member of this shop", 403);
+        assertGrantable({
+            callerIsOwner: inviter.isOwner,
+            callerPermissions: inviter.managerPermissions,
+            targetPermissions: targetRole.permissions,
+        });
 
         // Make sure user is not already an owner or member of the shop
         const data = await this.shopRepository.getUserShop(shopId, user.id);
@@ -130,20 +145,25 @@ export class InvitesServices {
     */
 
         // 1 & 2. Check if the invite exists and belongs to the shop and is for the user trying to accept it
-        const invites = await this.getInvites({ shopId });
-
-        const invite = invites.find((inv) => inv.id === inviteId);
-        if (!invite || invite.invitedUser.id !== userId) {
-            throw new AppError("Invite not found", 404);
-        }
-
-        const manager = await db.transaction(async (tx) => {
+        const { manager, invite } = await db.transaction(async (tx) => {
             const invites = await this.repository.getInvites({ shopId, queryOptions: { tx, forUpdate: true } });
+            const invite = invites.find((inv) => inv.id === inviteId);
             if (!invite || invite.invitedUser.id !== userId) {
                 throw new AppError("Invite not found", 404);
             }
             if (invite.expiresAt < new Date()) {
                 throw new AppError("Invite expired, please ask the shop owner or managers to re-invite you.", 400);
+            }
+            // Defense-in-depth: no API can move a role between shops today, but
+            // re-confirm the role still belongs here before granting it. A
+            // deleted role is already impossible (FK restrict blocks deleting
+            // roles referenced by invites), so this only fires on corruption.
+            const roleBelongsToShop = await this.rolesServices.doesRoleBelongToShop({
+                roleId: invite.role.id,
+                shopId,
+            });
+            if (!roleBelongsToShop) {
+                throw new AppError("Role does not belong to this shop", 400);
             }
 
             // 3. Add the user to the shop with the role specified in the invite
@@ -161,7 +181,7 @@ export class InvitesServices {
                 inviteId: invite.id,
                 queryOptions: { tx },
             });
-            return manager;
+            return { manager, invite };
         });
 
         return { manager, invite };

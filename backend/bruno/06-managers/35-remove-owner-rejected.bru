@@ -1,0 +1,16 @@
+meta {
+  name: Remove owner hard rejected
+  type: http
+  seq: 48
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{ownerId}}
+  auth: none
+}
+
+script:post-response {
+  test("400 owner untouchable self branch hits service guard", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

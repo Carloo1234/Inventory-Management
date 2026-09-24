@@ -1,0 +1,16 @@
+meta {
+  name: Owner accepts member invite rejected
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/{{acceptInviteId}}/accept
+  auth: none
+}
+
+script:post-response {
+  test("404 not yours", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

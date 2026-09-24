@@ -19,9 +19,9 @@ const router = Router({ mergeParams: true });
 const invitesRepository = new InvitesRepository();
 const userRepository = new AuthRepository();
 const rolesRepository = new RolesRepository();
-const rolesServices = new RolesServices(rolesRepository);
-const shopRepository = new ShopsRepository();
 const managerRepository = new ManagersRepository();
+const shopRepository = new ShopsRepository();
+const rolesServices = new RolesServices(rolesRepository, managerRepository, shopRepository);
 const invitesServices = new InvitesServices(
     invitesRepository,
     userRepository,

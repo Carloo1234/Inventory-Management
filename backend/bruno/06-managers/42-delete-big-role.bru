@@ -1,0 +1,16 @@
+meta {
+  name: Cleanup delete BigRole
+  type: http
+  seq: 57
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/{{bigRoleId}}
+  auth: none
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

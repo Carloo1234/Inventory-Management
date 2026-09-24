@@ -1,0 +1,16 @@
+meta {
+  name: Cross-shop accept rejected
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopBId}}/invites/{{acceptInviteId}}/accept
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

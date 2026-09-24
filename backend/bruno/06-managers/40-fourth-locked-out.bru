@@ -1,0 +1,16 @@
+meta {
+  name: Leaver locked out of shop
+  type: http
+  seq: 54
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}
+  auth: none
+}
+
+script:post-response {
+  test("404 after leave", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

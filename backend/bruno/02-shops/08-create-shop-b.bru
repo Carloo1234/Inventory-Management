@@ -1,0 +1,27 @@
+meta {
+  name: Create shop B cross-shop target
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/shops/
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Shop B {{stamp}}"
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

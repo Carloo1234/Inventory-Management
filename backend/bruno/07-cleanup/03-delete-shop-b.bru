@@ -1,0 +1,16 @@
+meta {
+  name: Delete shop B verify filtered
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopBId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 or 204 deleted", function() {
+    expect(res.getStatus()).to.be.oneOf([200, 204]);
+  });
+}

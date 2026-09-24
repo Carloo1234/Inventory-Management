@@ -1,0 +1,16 @@
+meta {
+  name: Cross-shop get manager
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopBId}}/managers/{{memberUserId}}
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

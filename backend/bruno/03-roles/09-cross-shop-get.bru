@@ -1,0 +1,16 @@
+meta {
+  name: Cross-shop get role
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopBId}}/roles/{{roleId}}
+  auth: none
+}
+
+script:post-response {
+  test("404 no cross-shop read", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

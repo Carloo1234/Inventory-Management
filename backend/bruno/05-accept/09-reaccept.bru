@@ -1,0 +1,16 @@
+meta {
+  name: Re-accept consumed invite
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/{{acceptInviteId}}/accept
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

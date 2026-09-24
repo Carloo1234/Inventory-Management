@@ -1,0 +1,18 @@
+meta {
+  name: Get shop by id
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 owner view", function() {
+    expect(res.getStatus()).to.equal(200);
+    const shop = res.body.data.shopData || res.body.data.shop || res.body.data;
+    expect(shop.isOwner).to.equal(true);
+  });
+}

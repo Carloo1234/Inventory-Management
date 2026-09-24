@@ -1,0 +1,16 @@
+meta {
+  name: Member list managers denied
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/managers
+  auth: none
+}
+
+script:post-response {
+  test("403 lacks manager read separate namespace from invite read", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

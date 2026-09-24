@@ -1,0 +1,17 @@
+meta {
+  name: Get manager by id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/managers/{{memberUserId}}
+  auth: none
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.data.user.email).to.equal(`bruno-member-${bru.getVar("stamp")}@mail.com`);
+  });
+}

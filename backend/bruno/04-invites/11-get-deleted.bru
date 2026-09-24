@@ -1,0 +1,16 @@
+meta {
+  name: Get deleted invite gone
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/invites/{{inviteId}}
+  auth: none
+}
+
+script:post-response {
+  test("404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

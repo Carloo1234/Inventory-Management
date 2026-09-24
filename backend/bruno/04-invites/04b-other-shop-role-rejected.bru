@@ -1,0 +1,28 @@
+meta {
+  name: Invite with other-shop role rejected
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "bruno-member-{{stamp}}@mail.com",
+    "roleId": "{{otherRoleId}}"
+  }
+}
+
+script:post-response {
+  test("400 wrong shop role", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Owner creates limited role
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Limited",
+    "permissions": ["roles:create", "roles:read", "invite:create", "invite:read", "manager:read"]
+  }
+}
+
+script:post-response {
+  test("201 owner bypasses subset gate", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("limitedRoleId", res.body.data.id);
+}

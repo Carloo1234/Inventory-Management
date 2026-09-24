@@ -14,6 +14,9 @@ export const PERMISSIONS = {
     INVITE_READ: { value: "invite:read", friendlyName: "View Invite(s)" },
     INVITE_UPDATE: { value: "invite:update", friendlyName: "Update Invite(s)" },
     INVITE_DELETE: { value: "invite:delete", friendlyName: "Delete Invite(s)" },
+    MANAGER_READ: { value: "manager:read", friendlyName: "View Manager(s)" },
+    MANAGER_UPDATE: { value: "manager:update", friendlyName: "Update Manager(s)" },
+    MANAGER_DELETE: { value: "manager:delete", friendlyName: "Delete Manager(s)" },
 } as const;
 
 export type PermissionValue = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]["value"];

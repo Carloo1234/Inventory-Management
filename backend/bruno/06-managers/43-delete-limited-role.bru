@@ -1,0 +1,16 @@
+meta {
+  name: Cleanup delete Limited role
+  type: http
+  seq: 58
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/roles/{{limitedRoleId}}
+  auth: none
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
