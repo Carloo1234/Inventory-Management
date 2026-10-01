@@ -1,0 +1,36 @@
+meta {
+  name: Duplicate SKU names variant index
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Dup {{stamp}}",
+    "variants": [
+      {
+        "sku": "BSKU-{{stamp}}-1",
+        "price": "1.00",
+        "quantity": 1,
+        "attributeValueIds": []
+      }
+    ]
+  }
+}
+
+script:post-response {
+  test("409 FormError on variants.0.sku", function() {
+    expect(res.getStatus()).to.equal(409);
+    expect(res.body.formErrors.fieldErrors["variants.0.sku"][0]).to.include("BSKU-");
+  });
+}

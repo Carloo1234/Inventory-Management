@@ -1,0 +1,35 @@
+meta {
+  name: Foreign attribute value rejected
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Alien {{stamp}}",
+    "variants": [
+      {
+        "sku": "BSKU-{{stamp}}-8",
+        "price": "1.00",
+        "quantity": 1,
+        "attributeValueIds": ["{{foreignValueId}}"]
+      }
+    ]
+  }
+}
+
+script:post-response {
+  test("404 cross-shop contamination blocked", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

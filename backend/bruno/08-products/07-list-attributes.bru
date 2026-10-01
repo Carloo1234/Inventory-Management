@@ -1,0 +1,19 @@
+meta {
+  name: List attributes embeds values
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes
+  auth: none
+}
+
+script:post-response {
+  test("200 names carry values arrays", function() {
+    expect(res.getStatus()).to.equal(200);
+    const found = res.body.data.find(x => x.id === bru.getVar("prodAttrId"));
+    expect(found, "Color missing").to.not.equal(undefined);
+    expect(found.values.length).to.equal(2);
+  });
+}

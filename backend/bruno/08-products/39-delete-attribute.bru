@@ -1,0 +1,16 @@
+meta {
+  name: Delete attribute freed by cascade
+  type: http
+  seq: 39
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes/{{prodAttrId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 links vanished with product", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

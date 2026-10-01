@@ -1,0 +1,16 @@
+meta {
+  name: Delete attribute in use blocked
+  type: http
+  seq: 30
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes/{{prodAttrId}}
+  auth: none
+}
+
+script:post-response {
+  test("409 variants still link Red and Blue", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+}

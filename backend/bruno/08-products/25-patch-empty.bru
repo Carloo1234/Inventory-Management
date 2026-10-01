@@ -1,0 +1,24 @@
+meta {
+  name: Patch empty body rejected
+  type: http
+  seq: 25
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+}
+
+script:post-response {
+  test("400 nothing to update", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

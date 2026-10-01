@@ -1,0 +1,44 @@
+meta {
+  name: In-request duplicate SKU flagged both
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Dup2 {{stamp}}",
+    "variants": [
+      {
+        "sku": "BSKU-{{stamp}}-9",
+        "price": "1.00",
+        "quantity": 1,
+        "attributeValueIds": []
+      },
+      {
+        "sku": "BSKU-{{stamp}}-9",
+        "price": "2.00",
+        "quantity": 2,
+        "attributeValueIds": []
+      }
+    ]
+  }
+}
+
+script:post-response {
+  test("409 both indices flagged", function() {
+    expect(res.getStatus()).to.equal(409);
+    const fields = res.body.formErrors.fieldErrors;
+    expect(fields["variants.0.sku"][0]).to.include("more than once");
+    expect(fields["variants.1.sku"][0]).to.include("more than once");
+  });
+}

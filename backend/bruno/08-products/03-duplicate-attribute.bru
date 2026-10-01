@@ -1,0 +1,27 @@
+meta {
+  name: Duplicate attribute name conflicts
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Color"
+  }
+}
+
+script:post-response {
+  test("409 scoped uniqueness", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+}

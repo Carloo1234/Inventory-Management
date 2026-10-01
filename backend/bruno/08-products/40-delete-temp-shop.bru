@@ -1,0 +1,16 @@
+meta {
+  name: Delete temp shop cascades
+  type: http
+  seq: 40
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{prodShopBId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 or 204 temp shop gone with its attribute", function() {
+    expect(res.getStatus()).to.be.oneOf([200, 204]);
+  });
+}

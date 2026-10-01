@@ -209,6 +209,22 @@ export const productVariants = pgTable(
     ],
 );
 
+export const productImages = pgTable("product_images", {
+    id: uuid("id")
+        .primaryKey()
+        .default(sql`uuidv7()`),
+    shopId: uuid("shop_id")
+        .references(() => shops.id, { onDelete: "cascade" })
+        .notNull(),
+    productId: uuid("product_id")
+        .references(() => products.id, { onDelete: "cascade" })
+        .notNull(),
+    variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+});
+
 // Through table
 export const productVariantsAttributeValues = pgTable(
     "product_variants_attribute_values",
@@ -247,6 +263,7 @@ export const shopRelations = relations(shops, ({ many, one }) => ({
     attributeNames: many(attributeNames),
     managers: many(shopManagers),
     invitations: many(shopInvitations),
+    productImages: many(productImages),
 }));
 
 export const shopManagersRelations = relations(shopManagers, ({ one }) => ({
@@ -287,6 +304,7 @@ export const shopInvitationsRelations = relations(shopInvitations, ({ one }) => 
 
 export const productsRelations = relations(products, ({ many, one }) => ({
     productVariants: many(productVariants),
+    images: many(productImages),
     shop: one(shops, {
         fields: [products.shopId],
         references: [shops.id],
@@ -295,6 +313,7 @@ export const productsRelations = relations(products, ({ many, one }) => ({
 
 export const productVariantsRelations = relations(productVariants, ({ many, one }) => ({
     variantAttributeValues: many(productVariantsAttributeValues),
+    images: many(productImages),
     product: one(products, {
         fields: [productVariants.productId, productVariants.shopId],
         references: [products.id, products.shopId],
@@ -326,6 +345,12 @@ export const attributeNamesRelations = relations(attributeNames, ({ many, one })
 export const rolesRelations = relations(roles, ({ many, one }) => ({
     shop: one(shops, { fields: [roles.shopId], references: [shops.id] }),
     managers: many(shopManagers),
+}));
+
+export const productImagesRelations = relations(productImages, ({ one }) => ({
+    shop: one(shops, { fields: [productImages.shopId], references: [shops.id] }),
+    product: one(products, { fields: [productImages.productId], references: [products.id] }),
+    variant: one(productVariants, { fields: [productImages.variantId], references: [productVariants.id] }),
 }));
 
 // TODO: Add indexes later to speed up database

@@ -1,0 +1,29 @@
+meta {
+  name: Create Red value
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes/{{prodAttrId}}/values
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "value": "Red"
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("redValueId", res.body.data.id);
+}

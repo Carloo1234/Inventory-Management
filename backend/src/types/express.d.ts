@@ -6,6 +6,7 @@ declare global {
         interface Request {
             sessionData?: SessionData;
             sessionId?: string;
+            validatedQuery?: Record<string, unknown>;
         }
     }
 }

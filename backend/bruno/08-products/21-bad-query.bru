@@ -1,0 +1,18 @@
+meta {
+  name: Bad sort and over-limit rejected
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/products?sortBy=price&limit=500
+  auth: none
+}
+
+script:post-response {
+  test("400 boundary validation names fields", function() {
+    expect(res.getStatus()).to.equal(400);
+    expect(res.body.formErrors.fieldErrors.limit).to.not.equal(undefined);
+    expect(res.body.formErrors.fieldErrors.sortBy).to.not.equal(undefined);
+  });
+}

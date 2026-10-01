@@ -1,0 +1,27 @@
+meta {
+  name: Patch variant price
+  type: http
+  seq: 29
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/products/variants/{{variantId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "price": "11.50"
+  }
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

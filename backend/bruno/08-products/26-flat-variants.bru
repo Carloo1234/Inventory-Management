@@ -1,0 +1,18 @@
+meta {
+  name: Flat variants sorted by price
+  type: http
+  seq: 26
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/products/variants?sortBy=price&sortOrder=asc
+  auth: none
+}
+
+script:post-response {
+  test("200 rows carry parent product", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.data.items.length).to.be.above(1);
+    expect(res.body.data.items[0].product.id).to.not.equal(undefined);
+  });
+}

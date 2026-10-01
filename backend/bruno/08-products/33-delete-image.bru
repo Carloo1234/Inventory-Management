@@ -1,0 +1,16 @@
+meta {
+  name: Delete image row
+  type: http
+  seq: 33
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}/images/{{imageId}}
+  auth: none
+}
+
+script:post-response {
+  test("200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,16 @@
+meta {
+  name: Last variant delete blocked
+  type: http
+  seq: 36
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/products/variants/{{lastVariantId}}
+  auth: none
+}
+
+script:post-response {
+  test("400 delete product instead", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

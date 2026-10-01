@@ -1,0 +1,34 @@
+meta {
+  name: Patch rename plus variant upsert
+  type: http
+  seq: 24
+}
+
+patch {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Shirt Renamed {{stamp}}",
+    "variants": [
+      {
+        "id": "{{variantId}}",
+        "quantity": 99
+      }
+    ]
+  }
+}
+
+script:post-response {
+  test("200 renamed quantity applied", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.data.name).to.include("Renamed");
+  });
+}

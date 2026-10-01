@@ -1,0 +1,16 @@
+meta {
+  name: Cross-shop attribute read rejected
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes/{{foreignAttrId}}
+  auth: none
+}
+
+script:post-response {
+  test("404 composite key isolation", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

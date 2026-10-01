@@ -1,0 +1,46 @@
+meta {
+  name: Create product two variants
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Shirt {{stamp}}",
+    "description": "Bruno test product",
+    "variants": [
+      {
+        "sku": "BSKU-{{stamp}}-1",
+        "price": "19.99",
+        "quantity": 20,
+        "attributeValueIds": ["{{redValueId}}"]
+      },
+      {
+        "sku": "BSKU-{{stamp}}-2",
+        "barcode": "BC{{stamp}}1",
+        "price": "24.50",
+        "quantity": 5,
+        "attributeValueIds": ["{{blueValueId}}"]
+      }
+    ]
+  }
+}
+
+script:post-response {
+  test("201 product with two variants", function() {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.body.data.variants.length).to.equal(2);
+  });
+
+  bru.setVar("productId", res.body.data.product.id);
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Duplicate value conflicts
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes/{{prodAttrId}}/values
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "value": "Red"
+  }
+}
+
+script:post-response {
+  test("409 value scoped to name", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+}

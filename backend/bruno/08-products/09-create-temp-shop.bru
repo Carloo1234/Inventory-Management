@@ -1,0 +1,27 @@
+meta {
+  name: Helper create temp shop B
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/shops/
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno ProdShopB {{stamp}}"
+  }
+}
+
+script:post-response {
+  test("201 helper", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

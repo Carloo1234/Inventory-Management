@@ -11,6 +11,8 @@ import { PERMISSIONS } from "../../utils/permissions";
 import rolesRouter from "../roles/roles.routes";
 import invitesRouter from "../invites/invites.routes";
 import managersRouter from "../managers/managers.routes";
+import attributesRouter from "../attributes/attributes.routes";
+import productsRouter from "../products/products.routes";
 
 const router = Router();
 
@@ -33,5 +35,7 @@ router.patch(
 router.use("/:shopId/roles", rolesRouter);
 router.use("/:shopId/invites", invitesRouter);
 router.use("/:shopId/managers", managersRouter);
+router.use("/:shopId/attributes", attributesRouter);
+router.use("/:shopId/products", productsRouter);
 
 export default router;

@@ -1,0 +1,18 @@
+meta {
+  name: Temp shop soft-deleted flag
+  type: http
+  seq: 41
+}
+
+get {
+  url: {{baseUrl}}/shops/{{prodShopBId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 with softDelete true deletes are flags not rows", function() {
+    expect(res.getStatus()).to.equal(200);
+    const shop = res.body.data.shopData || res.body.data.shop || res.body.data;
+    expect(shop.softDelete).to.equal(true);
+  });
+}

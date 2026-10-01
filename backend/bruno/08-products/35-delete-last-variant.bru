@@ -1,0 +1,18 @@
+meta {
+  name: Delete last variant refused
+  type: http
+  seq: 35
+}
+
+get {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 grab remaining id", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  bru.setVar("lastVariantId", res.body.data.productVariants[0].id);
+}

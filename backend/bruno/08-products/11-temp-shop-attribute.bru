@@ -1,0 +1,29 @@
+meta {
+  name: Helper attribute in temp shop
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/shops/{{prodShopBId}}/attributes
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Foreign"
+  }
+}
+
+script:post-response {
+  test("201 helper", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("foreignAttrId", res.body.data.id);
+}

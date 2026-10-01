@@ -1,0 +1,29 @@
+meta {
+  name: Create Blue value
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/attributes/{{prodAttrId}}/values
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "value": "Blue"
+  }
+}
+
+script:post-response {
+  test("201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("blueValueId", res.body.data.id);
+}

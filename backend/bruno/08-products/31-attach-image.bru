@@ -1,0 +1,29 @@
+meta {
+  name: Attach shared image URL
+  type: http
+  seq: 31
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}/images
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "https://example.com/shirt-{{stamp}}.jpg"
+  }
+}
+
+script:post-response {
+  test("201 row created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("imageId", res.body.data.id);
+}
