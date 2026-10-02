@@ -189,7 +189,7 @@ export const productVariants = pgTable(
             .notNull(),
         shopId: uuid("shop_id").notNull(),
         sku: varchar("sku", { length: 16 }).notNull(),
-        barcode: varchar("barcode", { length: 14 }),
+        barcode: varchar("barcode", { length: 64 }),
         price: numeric("price", { precision: 12, scale: 2 }).notNull(),
         quantity: integer("quantity").notNull().default(0),
         createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),

@@ -5,6 +5,7 @@ import axios from "axios";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { DeleteShopDialog } from "@/components/delete-shop-dialog";
+import { hasPerm } from "@/lib/permissions";
 
 /**
  * Shop dashboard page for `/shops/$shopId`.
@@ -103,7 +104,8 @@ function ShopDetailComponent() {
                 </p>
             </div>
 
-            {/* Danger Zone: Secure Shop Deletion */}
+            {/* Danger Zone: hidden entirely unless the viewer may delete the shop */}
+            {hasPerm(shop, "shop:delete") && (
             <Card className="border-destructive/30">
                 <CardHeader>
                     <CardTitle className="text-base text-destructive">Danger Zone</CardTitle>
@@ -122,6 +124,7 @@ function ShopDetailComponent() {
                     <DeleteShopDialog shopId={shop.id} shopName={shop.name} />
                 </CardContent>
             </Card>
+            )}
         </div>
     );
 }

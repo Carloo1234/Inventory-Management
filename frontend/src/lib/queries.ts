@@ -259,6 +259,190 @@ export const rolePresetsQueryOptions = (shopId: string) =>
     });
 
 /**
+ * Products, variants, attributes and images.
+ * Backend returns raw drizzle rows (timestamps arrive as ISO strings over JSON).
+ * Price is a STRING end-to-end (Postgres numeric serializes as string).
+ */
+export const productImageSchema = z.object({
+    id: z.string(),
+    shopId: z.string(),
+    productId: z.string(),
+    variantId: z.string().nullable(),
+    url: z.string(),
+    position: z.number(),
+    createdAt: z.string(),
+});
+
+const variantAttributeSchema = z.object({
+    attributeValue: z.object({
+        id: z.string(),
+        value: z.string(),
+        attributeNameId: z.string().optional(),
+        attributeName: z.object({ id: z.string(), name: z.string() }),
+    }),
+});
+
+export const variantSchema = z.object({
+    id: z.string(),
+    productId: z.string(),
+    shopId: z.string(),
+    sku: z.string(),
+    barcode: z.string().nullable(),
+    price: z.string(),
+    quantity: z.number(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    images: z.array(productImageSchema),
+    variantAttributeValues: z.array(variantAttributeSchema),
+});
+
+export const productSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    shopId: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    productVariants: z.array(variantSchema),
+    images: z.array(productImageSchema),
+});
+
+export const flatVariantSchema = variantSchema.extend({
+    product: z.object({ id: z.string(), name: z.string() }),
+});
+
+export type ProductImage = z.infer<typeof productImageSchema>;
+export type Variant = z.infer<typeof variantSchema>;
+export type Product = z.infer<typeof productSchema>;
+export type FlatVariant = z.infer<typeof flatVariantSchema>;
+
+const pagedSchema = <T extends z.ZodTypeAny>(item: T) =>
+    z.object({
+        items: z.array(item),
+        page: z.number(),
+        limit: z.number(),
+        total: z.number(),
+        totalPages: z.number(),
+    });
+
+export interface ProductListParams {
+    page: number;
+    limit: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: string;
+}
+
+export interface VariantListParams extends ProductListParams {
+    barcode?: string;
+}
+
+async function fetchProducts(shopId: string, params: ProductListParams) {
+    const query = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+        sortBy: params.sortBy ?? "createdAt",
+        sortOrder: params.sortOrder ?? "desc",
+        ...(params.search ? { search: params.search } : {}),
+    });
+    const response = await api.get(`/shops/${shopId}/products?${query}`);
+    if (!response.validResponse) throw Error("Invalid products data received");
+    return pagedSchema(productSchema).parse(response.validResponse.data);
+}
+
+export const productsQueryOptions = (shopId: string, params: ProductListParams) =>
+    queryOptions({
+        queryKey: ["products", shopId, params],
+        queryFn: () => fetchProducts(shopId, params),
+        placeholderData: (previous) => previous,
+    });
+
+export const productDetailQueryOptions = (shopId: string, productId: string) =>
+    queryOptions({
+        queryKey: ["product", shopId, productId],
+        queryFn: async () => {
+            const response = await api.get(`/shops/${shopId}/products/${productId}`);
+            if (!response.validResponse) throw Error("Invalid product data received");
+            return productSchema.parse(response.validResponse.data);
+        },
+    });
+
+async function fetchVariants(shopId: string, params: VariantListParams) {
+    const query = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+        sortBy: params.sortBy ?? "createdAt",
+        sortOrder: params.sortOrder ?? "desc",
+        ...(params.search ? { search: params.search } : {}),
+        ...(params.barcode ? { barcode: params.barcode } : {}),
+    });
+    const response = await api.get(`/shops/${shopId}/products/variants?${query}`);
+    if (!response.validResponse) throw Error("Invalid variants data received");
+    return pagedSchema(flatVariantSchema).parse(response.validResponse.data);
+}
+
+export const variantsQueryOptions = (shopId: string, params: VariantListParams) =>
+    queryOptions({
+        queryKey: ["variants", shopId, params],
+        queryFn: () => fetchVariants(shopId, params),
+        placeholderData: (previous) => previous,
+    });
+
+/**
+ * Shop attributes with embedded values (one fetch feeds all pickers).
+ */
+export const attributeSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    shopId: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    values: z.array(
+        z.object({
+            id: z.string(),
+            value: z.string(),
+            attributeNameId: z.string().optional(),
+            createdAt: z.string(),
+            updatedAt: z.string(),
+        }),
+    ),
+});
+
+export type ShopAttribute = z.infer<typeof attributeSchema>;
+
+export const attributesQueryOptions = (shopId: string) =>
+    queryOptions({
+        queryKey: ["attributes", shopId],
+        queryFn: async () => {
+            const response = await api.get(`/shops/${shopId}/attributes`);
+            if (!response.validResponse) throw Error("Invalid attributes data received");
+            return z.array(attributeSchema).parse(response.validResponse.data);
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+
+/**
+ * URL search-param contracts for the inventory routes (validateSearch).
+ * Defaults mirror the backend (page 1, limit 20, newest first).
+ */
+export const productListSearchSchema = z.object({
+    page: z.coerce.number().int().min(1).default(1).catch(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20).catch(20),
+    search: z.string().optional(),
+    sortBy: z.enum(["name", "createdAt", "updatedAt"]).default("createdAt").catch("createdAt"),
+    sortOrder: z.enum(["asc", "desc"]).default("desc").catch("desc"),
+});
+
+export const variantListSearchSchema = z.object({
+    page: z.coerce.number().int().min(1).default(1).catch(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20).catch(20),
+    search: z.string().optional(),
+    sortBy: z.enum(["sku", "price", "quantity", "createdAt"]).default("createdAt").catch("createdAt"),
+    sortOrder: z.enum(["asc", "desc"]).default("desc").catch("desc"),
+    barcode: z.string().optional(),
+});
+
+/**
  * PATCH /roles/:roleId returns { role, affectedManagers } instead of a bare row.
  */
 export const roleUpdateResultSchema = z.object({

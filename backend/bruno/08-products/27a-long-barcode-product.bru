@@ -1,0 +1,38 @@
+meta {
+  name: Create product with 30-char barcode
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno LongBC {{stamp}}",
+    "variants": [
+      {
+        "sku": "LBC-{{stamp}}",
+        "barcode": "LONGBARCODE-{{stamp}}-1234567890",
+        "price": "1.00",
+        "quantity": 1,
+        "attributeValueIds": []
+      }
+    ]
+  }
+}
+
+script:post-response {
+  test("201 over-14 barcodes accepted", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("longProdId", res.body.data.product.id);
+}

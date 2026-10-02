@@ -1,5 +1,3 @@
-"use client";
-
 import {
     Dialog,
     DialogContent,
@@ -66,7 +64,7 @@ export function AddShopDialog({ open, onOpenChange }: AddShopDialogProps) {
             await api.post("/shops", { name: data.name });
             // Invalidate shops query to refetch the updated list
             await queryClient.invalidateQueries({ queryKey: ["shops", "me"] });
-            const updatedShops = await queryClient.ensureQueryData(shopsQueryOptions);
+            const updatedShops = await queryClient.query(shopsQueryOptions);
             const newlyCreated = updatedShops[updatedShops.length - 1];
 
             if (newlyCreated) {
@@ -96,7 +94,8 @@ export function AddShopDialog({ open, onOpenChange }: AddShopDialogProps) {
                 <DialogHeader>
                     <DialogTitle>Create New Shop</DialogTitle>
                     <DialogDescription>
-                        Add a new point of sale shop workspace. You currently have {currentShopCount} of {shopLimit} allowed shops.
+                        Add a new point of sale shop workspace. You currently have {currentShopCount} of {shopLimit}{" "}
+                        allowed shops.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">

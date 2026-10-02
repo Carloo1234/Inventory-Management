@@ -4,7 +4,7 @@ import z from "zod";
 export const createProductVariantSchema = z
     .object({
         sku: z.string().trim().min(1, "SKU cannot be empty.").max(16, "SKU cannot exceed 16 characters"),
-        barcode: z.string().trim().max(14, "Barcode cannot exceed 14 characters").optional(),
+        barcode: z.string().trim().max(64, "Barcode cannot exceed 64 characters").optional(),
         price: z
             .string()
             .regex(/^\d+(\.\d+)?$/, {
@@ -30,7 +30,7 @@ export const updateProductVariantSchema = z
     .object({
         id: z.string().optional(),
         sku: z.string().trim().min(1, "SKU cannot be empty.").max(16, "SKU cannot exceed 16 characters").optional(),
-        barcode: z.string().trim().max(14, "Barcode cannot exceed 14 characters").optional(),
+        barcode: z.string().trim().max(64, "Barcode cannot exceed 64 characters").optional(),
         price: z
             .string()
             .regex(/^\d+(\.\d+)?$/, {
@@ -84,7 +84,7 @@ export const productVariantsQuerySchema = z.object({
     search: z.string().trim().max(255).optional(),
     sortBy: z.enum(["sku", "price", "quantity", "createdAt"]).default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).default("desc"),
-    barcode: z.string().trim().max(14).optional(),
+    barcode: z.string().trim().max(64).optional(),
 });
 
 // Text fields accompanying a multipart file upload. variantId omitted means

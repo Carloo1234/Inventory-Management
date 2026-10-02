@@ -1,4 +1,3 @@
-"use client";
 
 import * as React from "react";
 import { NavMain } from "@/components/nav-main";
@@ -18,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { TerminalSquareIcon, BotIcon, UsersIcon, BellIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { myInvitesQueryOptions, shopsQueryOptions, userQueryOptions } from "@/lib/queries";
+import { hasAnyPerm, hasPerm } from "@/lib/permissions";
 import { Link, useParams } from "@tanstack/react-router";
 
 /**
@@ -34,7 +34,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const shopBase = currentShopId ? `/shops/${currentShopId}` : "/shops";
 
     // Main navigation: flat links where possible, dropdowns only for
-    // genuinely grouped sections (Inventory, Team).
+    // genuinely grouped sections (Inventory, Team). Groups and items the
+    // viewer can't read are removed entirely (backend still guards URLs).
+    const activeShop = shops?.find((s) => s.id === currentShopId);
+    const teamItems = [
+        hasPerm(activeShop, "roles:read") ? { title: "Roles", url: `${shopBase}/roles` } : null,
+        hasPerm(activeShop, "invite:read") ? { title: "Invites", url: `${shopBase}/invites` } : null,
+        hasPerm(activeShop, "manager:read") ? { title: "Managers", url: `${shopBase}/managers` } : null,
+    ].filter((item): item is { title: string; url: string } => item !== null);
     const navMain = [
         {
             title: "Dashboard",
@@ -42,25 +49,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: <TerminalSquareIcon />,
             isActive: true,
         },
-        {
-            title: "Inventory",
-            url: shopBase,
-            icon: <BotIcon />,
-            items: [
-                { title: "Products", url: shopBase },
-                { title: "Stock Management", url: shopBase },
-            ],
-        },
-        {
-            title: "Team",
-            url: `${shopBase}/roles`,
-            icon: <UsersIcon />,
-            items: [
-                { title: "Roles", url: `${shopBase}/roles` },
-                { title: "Invites", url: `${shopBase}/invites` },
-                { title: "Managers", url: `${shopBase}/managers` },
-            ],
-        },
+        ...(hasAnyPerm(activeShop, "product:read")
+            ? [
+                  {
+                      title: "Inventory",
+                      url: `${shopBase}/products`,
+                      icon: <BotIcon />,
+                      items: [
+                          { title: "Products", url: `${shopBase}/products` },
+                          { title: "Stock", url: `${shopBase}/variants` },
+                          { title: "Attributes", url: `${shopBase}/attributes` },
+                      ],
+                  },
+              ]
+            : []),
+        ...(teamItems.length > 0
+            ? [
+                  {
+                      title: "Team",
+                      url: `${shopBase}/roles`,
+                      icon: <UsersIcon />,
+                      items: teamItems,
+                  },
+              ]
+            : []),
     ];
 
     const pendingCount = myInvites?.length ?? 0;

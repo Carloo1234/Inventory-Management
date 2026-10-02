@@ -5,9 +5,11 @@ import axios from "axios";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { PlusIcon, ShieldAlertIcon } from "lucide-react";
+import { InfoIcon, PlusIcon, ShieldAlertIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { InvitesList } from "@/components/invites-list";
 import { InviteDialog } from "@/components/invite-dialog";
+import { hasPerm } from "@/lib/permissions";
 
 /**
  * Outgoing invites page for `/shops/$shopId/invites`.
@@ -37,11 +39,12 @@ function InvitesPageComponent() {
 
     // Creating needs invite:create; picking a role needs roles:read too —
     // without it the dialog couldn't offer roles, so gate both together.
-    const canInvite =
-        shop?.isOwner ||
-        (shop?.managerPermissions?.includes("invite:create") && shop?.managerPermissions?.includes("roles:read")) ||
-        false;
-    const canRevoke = shop?.isOwner || shop?.managerPermissions?.includes("invite:delete") || false;
+    // A viewer with invite:create but no roles:read keeps a DISABLED button
+    // (visual necessity) whose click does nothing — see below.
+    const canInvite = hasPerm(shop, "invite:create", "roles:read");
+    const canSeeDisabledInvite =
+        !canInvite && hasPerm(shop, "invite:create");
+    const canRevoke = hasPerm(shop, "invite:delete");
 
     if (isLoading) {
         return (
@@ -74,11 +77,32 @@ function InvitesPageComponent() {
                         Invite teammates to {shop?.name ?? "this shop"} by email.
                     </p>
                 </div>
-                {canInvite && (
+                {canInvite ? (
                     <Button onClick={() => setDialogOpen(true)} className="gap-2 shrink-0">
                         <PlusIcon className="size-4" />
                         <span>Invite</span>
                     </Button>
+                ) : (
+                    canSeeDisabledInvite && (
+                        <span className="flex items-center gap-1.5">
+                            <Button disabled onClick={() => {}} className="gap-2 shrink-0">
+                                <PlusIcon className="size-4" />
+                                <span>Invite</span>
+                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <span className="inline-flex cursor-help text-muted-foreground hover:text-foreground">
+                                            <InfoIcon className="size-4" />
+                                        </span>
+                                    }
+                                />
+                                <TooltipContent side="bottom">
+                                    You need roles:read permission to pick a role for invites
+                                </TooltipContent>
+                            </Tooltip>
+                        </span>
+                    )
                 )}
             </div>
 

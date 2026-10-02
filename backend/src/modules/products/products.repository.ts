@@ -63,7 +63,10 @@ const productWithDetails = {
             },
         },
     },
-    images: { orderBy: [asc(productImages.position)] },
+    // Shared pool = ONLY variant-less rows. Without this filter the relation
+    // returns every image of the product (variant rows carry productId too),
+    // so variant-scoped uploads falsely appeared under "shared".
+    images: { where: isNull(productImages.variantId), orderBy: [asc(productImages.position)] },
 };
 
 export class ProductsRepository {

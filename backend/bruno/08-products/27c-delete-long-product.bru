@@ -1,0 +1,16 @@
+meta {
+  name: Delete long barcode product helper
+  type: http
+  seq: 30
+}
+
+delete {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{longProdId}}
+  auth: none
+}
+
+script:post-response {
+  test("200 helper cleanup", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

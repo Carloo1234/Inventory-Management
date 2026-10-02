@@ -17,9 +17,15 @@ import { Route as ShopsIndexRouteImport } from './routes/shops/index'
 import { Route as ShopsShopIdRouteRouteImport } from './routes/shops/$shopId/route'
 import { Route as ShopsInvitesRouteImport } from './routes/shops/invites'
 import { Route as ShopsShopIdIndexRouteImport } from './routes/shops/$shopId/index'
+import { Route as ShopsShopIdAttributesRouteImport } from './routes/shops/$shopId/attributes'
 import { Route as ShopsShopIdInvitesRouteImport } from './routes/shops/$shopId/invites'
 import { Route as ShopsShopIdManagersRouteImport } from './routes/shops/$shopId/managers'
+import { Route as ShopsShopIdProductsRouteRouteImport } from './routes/shops/$shopId/products/route'
 import { Route as ShopsShopIdRolesRouteImport } from './routes/shops/$shopId/roles'
+import { Route as ShopsShopIdVariantsRouteImport } from './routes/shops/$shopId/variants'
+import { Route as ShopsShopIdProductsIndexRouteImport } from './routes/shops/$shopId/products/index'
+import { Route as ShopsShopIdProductsProductIdRouteImport } from './routes/shops/$shopId/products/$productId'
+import { Route as ShopsShopIdProductsNewRouteImport } from './routes/shops/$shopId/products/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,6 +67,11 @@ const ShopsShopIdIndexRoute = ShopsShopIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ShopsShopIdRouteRoute,
 } as any)
+const ShopsShopIdAttributesRoute = ShopsShopIdAttributesRouteImport.update({
+  id: '/attributes',
+  path: '/attributes',
+  getParentRoute: () => ShopsShopIdRouteRoute,
+} as any)
 const ShopsShopIdInvitesRoute = ShopsShopIdInvitesRouteImport.update({
   id: '/invites',
   path: '/invites',
@@ -71,10 +82,38 @@ const ShopsShopIdManagersRoute = ShopsShopIdManagersRouteImport.update({
   path: '/managers',
   getParentRoute: () => ShopsShopIdRouteRoute,
 } as any)
+const ShopsShopIdProductsRouteRoute =
+  ShopsShopIdProductsRouteRouteImport.update({
+    id: '/products',
+    path: '/products',
+    getParentRoute: () => ShopsShopIdRouteRoute,
+  } as any)
 const ShopsShopIdRolesRoute = ShopsShopIdRolesRouteImport.update({
   id: '/roles',
   path: '/roles',
   getParentRoute: () => ShopsShopIdRouteRoute,
+} as any)
+const ShopsShopIdVariantsRoute = ShopsShopIdVariantsRouteImport.update({
+  id: '/variants',
+  path: '/variants',
+  getParentRoute: () => ShopsShopIdRouteRoute,
+} as any)
+const ShopsShopIdProductsIndexRoute =
+  ShopsShopIdProductsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ShopsShopIdProductsRouteRoute,
+  } as any)
+const ShopsShopIdProductsProductIdRoute =
+  ShopsShopIdProductsProductIdRouteImport.update({
+    id: '/$productId',
+    path: '/$productId',
+    getParentRoute: () => ShopsShopIdProductsRouteRoute,
+  } as any)
+const ShopsShopIdProductsNewRoute = ShopsShopIdProductsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => ShopsShopIdProductsRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -85,10 +124,16 @@ export interface FileRoutesByFullPath {
   '/shops/$shopId': typeof ShopsShopIdRouteRouteWithChildren
   '/shops/invites': typeof ShopsInvitesRoute
   '/shops/': typeof ShopsIndexRoute
+  '/shops/$shopId/products': typeof ShopsShopIdProductsRouteRouteWithChildren
+  '/shops/$shopId/attributes': typeof ShopsShopIdAttributesRoute
   '/shops/$shopId/invites': typeof ShopsShopIdInvitesRoute
   '/shops/$shopId/managers': typeof ShopsShopIdManagersRoute
   '/shops/$shopId/roles': typeof ShopsShopIdRolesRoute
+  '/shops/$shopId/variants': typeof ShopsShopIdVariantsRoute
   '/shops/$shopId/': typeof ShopsShopIdIndexRoute
+  '/shops/$shopId/products/$productId': typeof ShopsShopIdProductsProductIdRoute
+  '/shops/$shopId/products/new': typeof ShopsShopIdProductsNewRoute
+  '/shops/$shopId/products/': typeof ShopsShopIdProductsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -96,10 +141,15 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/shops/invites': typeof ShopsInvitesRoute
   '/shops': typeof ShopsIndexRoute
+  '/shops/$shopId/attributes': typeof ShopsShopIdAttributesRoute
   '/shops/$shopId/invites': typeof ShopsShopIdInvitesRoute
   '/shops/$shopId/managers': typeof ShopsShopIdManagersRoute
   '/shops/$shopId/roles': typeof ShopsShopIdRolesRoute
+  '/shops/$shopId/variants': typeof ShopsShopIdVariantsRoute
   '/shops/$shopId': typeof ShopsShopIdIndexRoute
+  '/shops/$shopId/products/$productId': typeof ShopsShopIdProductsProductIdRoute
+  '/shops/$shopId/products/new': typeof ShopsShopIdProductsNewRoute
+  '/shops/$shopId/products': typeof ShopsShopIdProductsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,10 +160,16 @@ export interface FileRoutesById {
   '/shops/$shopId': typeof ShopsShopIdRouteRouteWithChildren
   '/shops/invites': typeof ShopsInvitesRoute
   '/shops/': typeof ShopsIndexRoute
+  '/shops/$shopId/products': typeof ShopsShopIdProductsRouteRouteWithChildren
+  '/shops/$shopId/attributes': typeof ShopsShopIdAttributesRoute
   '/shops/$shopId/invites': typeof ShopsShopIdInvitesRoute
   '/shops/$shopId/managers': typeof ShopsShopIdManagersRoute
   '/shops/$shopId/roles': typeof ShopsShopIdRolesRoute
+  '/shops/$shopId/variants': typeof ShopsShopIdVariantsRoute
   '/shops/$shopId/': typeof ShopsShopIdIndexRoute
+  '/shops/$shopId/products/$productId': typeof ShopsShopIdProductsProductIdRoute
+  '/shops/$shopId/products/new': typeof ShopsShopIdProductsNewRoute
+  '/shops/$shopId/products/': typeof ShopsShopIdProductsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -125,10 +181,16 @@ export interface FileRouteTypes {
     | '/shops/$shopId'
     | '/shops/invites'
     | '/shops/'
+    | '/shops/$shopId/products'
+    | '/shops/$shopId/attributes'
     | '/shops/$shopId/invites'
     | '/shops/$shopId/managers'
     | '/shops/$shopId/roles'
+    | '/shops/$shopId/variants'
     | '/shops/$shopId/'
+    | '/shops/$shopId/products/$productId'
+    | '/shops/$shopId/products/new'
+    | '/shops/$shopId/products/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -136,10 +198,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/shops/invites'
     | '/shops'
+    | '/shops/$shopId/attributes'
     | '/shops/$shopId/invites'
     | '/shops/$shopId/managers'
     | '/shops/$shopId/roles'
+    | '/shops/$shopId/variants'
     | '/shops/$shopId'
+    | '/shops/$shopId/products/$productId'
+    | '/shops/$shopId/products/new'
+    | '/shops/$shopId/products'
   id:
     | '__root__'
     | '/'
@@ -149,10 +216,16 @@ export interface FileRouteTypes {
     | '/shops/$shopId'
     | '/shops/invites'
     | '/shops/'
+    | '/shops/$shopId/products'
+    | '/shops/$shopId/attributes'
     | '/shops/$shopId/invites'
     | '/shops/$shopId/managers'
     | '/shops/$shopId/roles'
+    | '/shops/$shopId/variants'
     | '/shops/$shopId/'
+    | '/shops/$shopId/products/$productId'
+    | '/shops/$shopId/products/new'
+    | '/shops/$shopId/products/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -220,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopsShopIdIndexRouteImport
       parentRoute: typeof ShopsShopIdRouteRoute
     }
+    '/shops/$shopId/attributes': {
+      id: '/shops/$shopId/attributes'
+      path: '/attributes'
+      fullPath: '/shops/$shopId/attributes'
+      preLoaderRoute: typeof ShopsShopIdAttributesRouteImport
+      parentRoute: typeof ShopsShopIdRouteRoute
+    }
     '/shops/$shopId/invites': {
       id: '/shops/$shopId/invites'
       path: '/invites'
@@ -234,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopsShopIdManagersRouteImport
       parentRoute: typeof ShopsShopIdRouteRoute
     }
+    '/shops/$shopId/products': {
+      id: '/shops/$shopId/products'
+      path: '/products'
+      fullPath: '/shops/$shopId/products'
+      preLoaderRoute: typeof ShopsShopIdProductsRouteRouteImport
+      parentRoute: typeof ShopsShopIdRouteRoute
+    }
     '/shops/$shopId/roles': {
       id: '/shops/$shopId/roles'
       path: '/roles'
@@ -241,20 +328,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopsShopIdRolesRouteImport
       parentRoute: typeof ShopsShopIdRouteRoute
     }
+    '/shops/$shopId/variants': {
+      id: '/shops/$shopId/variants'
+      path: '/variants'
+      fullPath: '/shops/$shopId/variants'
+      preLoaderRoute: typeof ShopsShopIdVariantsRouteImport
+      parentRoute: typeof ShopsShopIdRouteRoute
+    }
+    '/shops/$shopId/products/': {
+      id: '/shops/$shopId/products/'
+      path: '/'
+      fullPath: '/shops/$shopId/products/'
+      preLoaderRoute: typeof ShopsShopIdProductsIndexRouteImport
+      parentRoute: typeof ShopsShopIdProductsRouteRoute
+    }
+    '/shops/$shopId/products/$productId': {
+      id: '/shops/$shopId/products/$productId'
+      path: '/$productId'
+      fullPath: '/shops/$shopId/products/$productId'
+      preLoaderRoute: typeof ShopsShopIdProductsProductIdRouteImport
+      parentRoute: typeof ShopsShopIdProductsRouteRoute
+    }
+    '/shops/$shopId/products/new': {
+      id: '/shops/$shopId/products/new'
+      path: '/new'
+      fullPath: '/shops/$shopId/products/new'
+      preLoaderRoute: typeof ShopsShopIdProductsNewRouteImport
+      parentRoute: typeof ShopsShopIdProductsRouteRoute
+    }
   }
 }
 
+interface ShopsShopIdProductsRouteRouteChildren {
+  ShopsShopIdProductsProductIdRoute: typeof ShopsShopIdProductsProductIdRoute
+  ShopsShopIdProductsNewRoute: typeof ShopsShopIdProductsNewRoute
+  ShopsShopIdProductsIndexRoute: typeof ShopsShopIdProductsIndexRoute
+}
+
+const ShopsShopIdProductsRouteRouteChildren: ShopsShopIdProductsRouteRouteChildren =
+  {
+    ShopsShopIdProductsProductIdRoute: ShopsShopIdProductsProductIdRoute,
+    ShopsShopIdProductsNewRoute: ShopsShopIdProductsNewRoute,
+    ShopsShopIdProductsIndexRoute: ShopsShopIdProductsIndexRoute,
+  }
+
+const ShopsShopIdProductsRouteRouteWithChildren =
+  ShopsShopIdProductsRouteRoute._addFileChildren(
+    ShopsShopIdProductsRouteRouteChildren,
+  )
+
 interface ShopsShopIdRouteRouteChildren {
+  ShopsShopIdProductsRouteRoute: typeof ShopsShopIdProductsRouteRouteWithChildren
+  ShopsShopIdAttributesRoute: typeof ShopsShopIdAttributesRoute
   ShopsShopIdInvitesRoute: typeof ShopsShopIdInvitesRoute
   ShopsShopIdManagersRoute: typeof ShopsShopIdManagersRoute
   ShopsShopIdRolesRoute: typeof ShopsShopIdRolesRoute
+  ShopsShopIdVariantsRoute: typeof ShopsShopIdVariantsRoute
   ShopsShopIdIndexRoute: typeof ShopsShopIdIndexRoute
 }
 
 const ShopsShopIdRouteRouteChildren: ShopsShopIdRouteRouteChildren = {
+  ShopsShopIdProductsRouteRoute: ShopsShopIdProductsRouteRouteWithChildren,
+  ShopsShopIdAttributesRoute: ShopsShopIdAttributesRoute,
   ShopsShopIdInvitesRoute: ShopsShopIdInvitesRoute,
   ShopsShopIdManagersRoute: ShopsShopIdManagersRoute,
   ShopsShopIdRolesRoute: ShopsShopIdRolesRoute,
+  ShopsShopIdVariantsRoute: ShopsShopIdVariantsRoute,
   ShopsShopIdIndexRoute: ShopsShopIdIndexRoute,
 }
 

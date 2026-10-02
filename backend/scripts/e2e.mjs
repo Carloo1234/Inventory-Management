@@ -802,6 +802,45 @@ await step("GET flat variants price-sorted + barcode lookup", async () => {
     expectSuccess(r, 200);
     assert.equal(r.json.data.items.length, 1);
 });
+await step("long barcode (30 chars) create + lookup → 200", async () => {
+    const longBc = `LONGBARCODE-${stamp}-1234567890`.slice(0, 30);
+    let r = await owner.req("POST", `/shops/${shopA}/products`, {
+        name: `LongBC-${stamp}`,
+        variants: [{ sku: `LBC-${stamp}`, barcode: longBc, price: "1", quantity: 1, attributeValueIds: [] }],
+    });
+    expectSuccess(r, 201);
+    const longProdId = r.json.data.product.id;
+    r = await owner.req("GET", `/shops/${shopA}/products/variants?barcode=${longBc}`);
+    expectSuccess(r, 200);
+    assert.equal(r.json.data.items.length, 1);
+    r = await owner.req("DELETE", `/shops/${shopA}/products/${longProdId}`);
+    expectSuccess(r, 200);
+});
+await step("variant image absent from shared pool", async () => {
+    // Upload scoped to a variant, then confirm the product-level shared pool
+    // does NOT contain it (regression: unfiltered relation leaked them).
+    const det = await owner.req("GET", `/shops/${shopA}/products/${pProductId}`);
+    expectSuccess(det, 200);
+    const target = det.json.data.productVariants[0];
+    const up = await uploadImage(owner, shopA, pProductId, {
+        variantId: target.id,
+        bytes: PNG_1PX,
+        filename: "scoped.png",
+        mimetype: "image/png",
+    });
+    expectSuccess(up, 201);
+    const after = await owner.req("GET", `/shops/${shopA}/products/${pProductId}`);
+    expectSuccess(after, 200);
+    assert.ok(!(after.json.data.images || []).some((i) => i.id === up.json.data.id), "leaked into shared pool");
+    assert.ok(
+        after.json.data.productVariants
+            .find((v) => v.id === target.id)
+            .images.some((i) => i.id === up.json.data.id),
+        "missing from own variant",
+    );
+    const del = await owner.req("DELETE", `/shops/${shopA}/products/${pProductId}/images/${up.json.data.id}`);
+    expectSuccess(del, 200);
+});
 await step("PATCH single variant → 200, empty → 400", async () => {
     let r = await owner.req("PATCH", `/shops/${shopA}/products/variants/${pV1}`, { price: "11.50" });
     expectSuccess(r, 200);

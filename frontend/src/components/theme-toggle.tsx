@@ -1,4 +1,3 @@
-"use client";
 
 import { MoonIcon, SunIcon, LaptopIcon } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
