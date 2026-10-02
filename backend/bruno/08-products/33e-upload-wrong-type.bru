@@ -1,0 +1,21 @@
+meta {
+  name: Upload text file rejected
+  type: http
+  seq: 38
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}/images/upload
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  image: @file(08-products/fixtures/note.txt) @contentType(text/plain)
+}
+
+script:post-response {
+  test("400 only images allowed", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

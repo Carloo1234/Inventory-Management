@@ -15,10 +15,13 @@ headers {
 }
 
 body:json {
+  script:post-response {
+  test("400 nothing to update", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
 }
 
 script:post-response {
   test("400 nothing to update", function() {
     expect(res.getStatus()).to.equal(400);
-  });
 }

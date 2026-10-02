@@ -1,0 +1,21 @@
+meta {
+  name: Upload without file rejected
+  type: http
+  seq: 39
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}/images/upload
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  note: just-text-no-file
+}
+
+script:post-response {
+  test("400 missing file", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

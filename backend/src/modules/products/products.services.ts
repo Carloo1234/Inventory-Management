@@ -1,4 +1,4 @@
-import { promises as fs } from "node:fs";
+import { v7 as uuidv7 } from "uuid";
 import type z from "zod";
 import type { ProductsRepository } from "./products.repository";
 import type {
@@ -10,6 +10,7 @@ import type {
     updateProductVariantSchema,
 } from "./products.schema";
 import { AppError } from "../../utils/AppError";
+import { extensionForMimetype, storage } from "../../utils/storage";
 
 export class ProductsServices {
     private repository: ProductsRepository;
@@ -80,7 +81,14 @@ export class ProductsServices {
     };
 
     deleteProductById = async ({ productId, shopId }: { productId: string; shopId: string }) => {
-        return this.repository.deleteProductById({ productId, shopId });
+        // Collect image URLs BEFORE the cascading delete, then clean files
+        // best effort afterwards (a file failure must never fail the request).
+        const images = await this.repository.getProductImages({ productId, shopId });
+        const deleted = await this.repository.deleteProductById({ productId, shopId });
+        for (const image of images) {
+            await storage.remove(image.url);
+        }
+        return deleted;
     };
 
     getVariantById = async ({ variantId, shopId }: { variantId: string; shopId: string }) => {
@@ -109,7 +117,12 @@ export class ProductsServices {
     };
 
     deleteVariantById = async ({ variantId, shopId }: { variantId: string; shopId: string }) => {
-        return this.repository.deleteVariantById({ variantId, shopId });
+        const current = await this.repository.getVariantById({ variantId, shopId });
+        const deleted = await this.repository.deleteVariantById({ variantId, shopId });
+        for (const image of current.images) {
+            await storage.remove(image.url);
+        }
+        return deleted;
     };
 
     getProductImages = async ({ productId, shopId }: { productId: string; shopId: string }) => {
@@ -133,14 +146,46 @@ export class ProductsServices {
     deleteProductImageById = async ({ imageId, shopId }: { imageId: string; shopId: string }) => {
         const deleted = await this.repository.deleteProductImageById({ imageId, shopId });
         // Best-effort file cleanup: a file failure must never fail the request
-        // (the DB row is already gone)
-        if (deleted.url.startsWith("/uploads/")) {
-            try {
-                await fs.unlink(`.${deleted.url}`);
-            } catch (error) {
-                console.log(`Orphaned image file (manual cleanup): ${deleted.url}`, error);
-            }
-        }
+        await storage.remove(deleted.url);
         return deleted;
+    };
+
+    uploadProductImage = async ({
+        shopId,
+        productId,
+        variantId,
+        file,
+    }: {
+        shopId: string;
+        productId: string;
+        variantId?: string;
+        file: { buffer: Buffer; mimetype: string };
+    }) => {
+        const ext = extensionForMimetype(file.mimetype);
+
+        if (!ext) throw new AppError("Only JPEG, PNG, WebP or GIF images are allowed", 400);
+        const filename = `${uuidv7()}.${ext}`;
+
+        const created =
+            variantId === undefined
+                ? await this.repository.addProductImage({
+                      shopId,
+                      productId,
+                      url: `/uploads/${shopId}/${filename}`,
+                  })
+                : await this.repository.addProductImage({
+                      shopId,
+                      productId,
+                      variantId,
+                      url: `/uploads/${shopId}/${filename}`,
+                  });
+        try {
+            await storage.save({ shopId, filename, buffer: file.buffer, mimetype: file.mimetype });
+        } catch (error) {
+            await this.repository.deleteProductImageById({ imageId: created.id, shopId });
+            console.log("Rolled back image row after failed file write:", error);
+            throw new AppError("Failed to save image, please try again", 500);
+        }
+        return created;
     };
 }

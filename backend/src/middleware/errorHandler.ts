@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { MulterError } from "multer";
 import { AppError, FormError } from "../utils/AppError";
 import { ApiResponse } from "../utils/apiResponse";
 
@@ -14,6 +15,18 @@ export class ErrorHandler {
 
         if (error instanceof AppError) {
             return ApiResponse.error(res, error.status_code, null, null, { type: "error", message: error.message });
+        }
+
+        // Multer upload failures (file too large, too many files): always the
+        // caller's fault, never a 500. fileFilter rejections already arrive as
+        // AppError and are handled above.
+        console.log("DEBUG err:", error.constructor.name, (error as { code?: string }).code, error.message.slice(0, 160));
+        if (error instanceof MulterError) {
+            const message =
+                error.code === "LIMIT_FILE_SIZE"
+                    ? "Image must be smaller than 5MB"
+                    : "Image upload failed, please try again";
+            return ApiResponse.error(res, 400, null, null, { type: "error", message });
         }
 
         console.error(error); // log the real error server-side

@@ -41,6 +41,13 @@ export const updateProductVariantSchema = z
         quantity: z.number("Quantity must be a number").int("Quantity must be a whole number").optional(),
         attributeValueIds: z.array(z.string()).optional(),
     })
+    .refine((data) => {
+        // Check if at least one value is not undefined/null/empty depending on needs
+        console.log(
+            `Refine ran and gave ${Object.values(data).some((val) => val !== undefined && val !== null && val !== "")}`,
+        );
+        return Object.values(data).some((val) => val !== undefined && val !== null && val !== "");
+    })
     .strict();
 
 export const updateProductSchema = z
@@ -80,9 +87,17 @@ export const productVariantsQuerySchema = z.object({
     barcode: z.string().trim().max(14).optional(),
 });
 
+// Text fields accompanying a multipart file upload. variantId omitted means
+// shared across the whole product. Validated by validateRequest exactly like
+// a JSON body — multer populates req.body with the text parts.
+export const uploadProductImageSchema = z
+    .object({
+        variantId: z.string().min(1, "Variant ID cannot be empty.").optional(),
+    })
+    .strict();
+
 // Attach an existing (externally hosted) image URL. variantId omitted means
-// shared across the whole product. Multipart file upload arrives later and
-// targets the same repository method, so this contract is already final.
+// shared across the whole product.
 export const attachProductImageSchema = z
     .object({
         url: z.string().trim().min(1, "URL cannot be empty.").max(2000, "URL cannot exceed 2000 characters"),

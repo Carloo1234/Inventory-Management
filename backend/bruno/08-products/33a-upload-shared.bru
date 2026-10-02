@@ -1,0 +1,24 @@
+meta {
+  name: Upload shared image file
+  type: http
+  seq: 34
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}/images/upload
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  image: @file(08-products/fixtures/test.png) @contentType(image/png)
+}
+
+script:post-response {
+  test("201 local url stored", function() {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.body.data.url.startsWith("/uploads/")).to.equal(true);
+  });
+
+  bru.setVar("uploadId", res.body.data.id);
+}

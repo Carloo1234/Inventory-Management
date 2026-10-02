@@ -1,0 +1,25 @@
+meta {
+  name: Upload variant-scoped image file
+  type: http
+  seq: 36
+}
+
+post {
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}/images/upload
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  image: @file(08-products/fixtures/test.png) @contentType(image/png)
+  variantId: {{variantId}}
+}
+
+script:post-response {
+  test("201 variant scoped", function() {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.body.data.variantId).to.equal(bru.getVar("variantId"));
+  });
+
+  bru.setVar("uploadVariantId", res.body.data.id);
+}

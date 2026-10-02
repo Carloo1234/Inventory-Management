@@ -14,7 +14,9 @@ import {
     productVariantsQuerySchema,
     updateProductSchema,
     updateProductVariantSchema,
+    uploadProductImageSchema,
 } from "./products.schema";
+import { uploadSingleImage } from "./products.upload";
 
 // "/shops/:shopId/products" is the base path for this router, so all routes here are relative to that
 // Merge params allows this child products router, to see shopId param in the routed shops module.
@@ -102,14 +104,26 @@ router.get(
     validatePermission([PERMISSIONS.PRODUCT_READ.value]),
     productsController.getProductImages,
 );
-// Attach an existing image URL (multipart file upload arrives later and
-// reuses the same service method with a stored path as the URL).
+// Attach an existing image URL (no file bytes involved).
 router.post(
     "/:productId/images",
     authenticate,
     validateRequest(attachProductImageSchema),
     validatePermission([PERMISSIONS.PRODUCT_CREATE.value]),
     productsController.attachProductImage,
+);
+// Upload one image file (multipart field "image", optional text field
+// variantId for variant-scoped images). One image per request: per-file
+// validation means one bad file never kills a batch, and the frontend can
+// fire uploads in parallel with per-image progress. Chain order matters:
+// authenticate first so anonymous callers never make the server buffer bytes.
+router.post(
+    "/:productId/images/upload",
+    authenticate,
+    uploadSingleImage,
+    validateRequest(uploadProductImageSchema),
+    validatePermission([PERMISSIONS.PRODUCT_CREATE.value]),
+    productsController.uploadProductImage,
 );
 // Delete image row (+ best-effort file cleanup in the service).
 router.delete(

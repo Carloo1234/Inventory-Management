@@ -6,6 +6,7 @@
 // One step uses a direct DB tweak (expired invite) since no API sets expiry.
 
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { Pool } from "@neondatabase/serverless";
 
 const BASE = (process.env.API_URL || "http://localhost:3000").replace(/\/+$/, "");
@@ -661,6 +662,257 @@ await step("cleanup subset-test roles", async () => {
         const r = await owner.req("DELETE", `/shops/${shopA}/roles/${id}`);
         expectSuccess(r, 200);
     }
+});
+
+console.log("── Products ──");
+// 1x1 PNG bytes for upload tests (68 bytes, well under the 5MB cap).
+const PNG_1PX = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+);
+async function uploadImage(client, shopId, productId, { variantId, bytes, filename, mimetype }) {
+    const fd = new FormData();
+    if (bytes !== null) fd.append("image", new Blob([bytes], { type: mimetype }), filename);
+    if (variantId) fd.append("variantId", variantId);
+    const res = await fetch(`${BASE}/shops/${shopId}/products/${productId}/images/upload`, {
+        method: "POST",
+        headers: { ...(client.cookie ? { Cookie: client.cookie } : {}) },
+        body: fd,
+    });
+    const text = await res.text();
+    return { status: res.status, json: text ? JSON.parse(text) : null, raw: text };
+}
+const diskPath = (url) => url.replace(/^\//, "");
+let pAttrId, pRedId, pBlueId, pForeignValueId, pProductId, pV1, pV2;
+
+await step("attributes: name + 2 values → 201", async () => {
+    let r = await owner.req("POST", `/shops/${shopA}/attributes`, { name: "Size" });
+    expectSuccess(r, 201);
+    pAttrId = r.json.data.id;
+    r = await owner.req("POST", `/shops/${shopA}/attributes/${pAttrId}/values`, { value: "M" });
+    expectSuccess(r, 201);
+    pRedId = r.json.data.id;
+    r = await owner.req("POST", `/shops/${shopA}/attributes/${pAttrId}/values`, { value: "L" });
+    expectSuccess(r, 201);
+    pBlueId = r.json.data.id;
+});
+await step("attributes: foreign value ready in shopB", async () => {
+    let r = await owner.req("POST", `/shops/${shopB}/attributes`, { name: "Alien" });
+    expectSuccess(r, 201);
+    r = await owner.req("POST", `/shops/${shopB}/attributes/${r.json.data.id}/values`, { value: "X" });
+    expectSuccess(r, 201);
+    pForeignValueId = r.json.data.id;
+});
+await step("POST product 2 variants → 201", async () => {
+    const r = await owner.req("POST", `/shops/${shopA}/products`, {
+        name: `Tea-${stamp}`,
+        description: "e2e product",
+        variants: [
+            { sku: `TSKU-${stamp}-1`, price: "9.99", quantity: 20, attributeValueIds: [pRedId] },
+            { sku: `TSKU-${stamp}-2`, barcode: `BC${stamp}1`, price: "24.50", quantity: 5, attributeValueIds: [pBlueId] },
+        ],
+    });
+    expectSuccess(r, 201);
+    pProductId = r.json.data.product.id;
+    assert.equal(r.json.data.variants.length, 2);
+});
+await step("POST duplicate SKU → 409 FormError variants.0.sku", async () => {
+    const r = await owner.req("POST", `/shops/${shopA}/products`, {
+        name: "Dup",
+        variants: [{ sku: `TSKU-${stamp}-1`, price: "1", quantity: 1, attributeValueIds: [] }],
+    });
+    expectFailure(r, 409);
+    assert.ok(r.json.formErrors.fieldErrors["variants.0.sku"][0].includes(`TSKU-${stamp}-1`));
+});
+await step("POST in-request duplicate → 409 flags both indices", async () => {
+    const r = await owner.req("POST", `/shops/${shopA}/products`, {
+        name: "Dup2",
+        variants: [
+            { sku: `TSKU-${stamp}-9`, price: "1", quantity: 1, attributeValueIds: [] },
+            { sku: `TSKU-${stamp}-9`, price: "2", quantity: 2, attributeValueIds: [] },
+        ],
+    });
+    expectFailure(r, 409);
+    assert.ok(r.json.formErrors.fieldErrors["variants.0.sku"]);
+    assert.ok(r.json.formErrors.fieldErrors["variants.1.sku"]);
+});
+await step("POST foreign value → 404", async () => {
+    const r = await owner.req("POST", `/shops/${shopA}/products`, {
+        name: "Alien",
+        variants: [{ sku: `TSKU-${stamp}-8`, price: "1", quantity: 1, attributeValueIds: [pForeignValueId] }],
+    });
+    expectFailure(r, 404);
+});
+await step("POST empty variants + numeric price → 400s", async () => {
+    let r = await owner.req("POST", `/shops/${shopA}/products`, { name: "Empty", variants: [] });
+    expectFailure(r, 400);
+    r = await owner.req("POST", `/shops/${shopA}/products`, {
+        name: "Num",
+        variants: [{ sku: `TSKU-${stamp}-7`, price: 9.99, quantity: 1, attributeValueIds: [] }],
+    });
+    expectFailure(r, 400);
+});
+await step("GET products paginated + envelope", async () => {
+    const r = await owner.req("GET", `/shops/${shopA}/products?page=1&limit=5&sortBy=name&sortOrder=asc`);
+    expectSuccess(r, 200);
+    assert.ok(r.json.data.total >= 1 && r.json.data.items.length >= 1 && r.json.data.totalPages >= 1);
+});
+await step("GET products bad sort + over-limit → 400", async () => {
+    const r = await owner.req("GET", `/shops/${shopA}/products?sortBy=price&limit=500`);
+    expectFailure(r, 400);
+    assert.ok(r.json.formErrors.fieldErrors.limit && r.json.formErrors.fieldErrors.sortBy);
+});
+await step("GET product nests variants + attributes", async () => {
+    const r = await owner.req("GET", `/shops/${shopA}/products/${pProductId}`);
+    expectSuccess(r, 200);
+    assert.equal(r.json.data.productVariants.length, 2);
+    pV1 = r.json.data.productVariants[0].id;
+    pV2 = r.json.data.productVariants[1].id;
+});
+await step("GET product cross-shop → 404", async () => {
+    const r = await owner.req("GET", `/shops/${shopB}/products/${pProductId}`);
+    expectFailure(r, 404);
+});
+await step("PATCH rename + variant upsert → 200", async () => {
+    const r = await owner.req("PATCH", `/shops/${shopA}/products/${pProductId}`, {
+        name: `Tea2-${stamp}`,
+        variants: [
+            { id: pV1, quantity: 99 },
+            { sku: `TSKU-${stamp}-3`, price: "9.99", quantity: 3, attributeValueIds: [] },
+        ],
+    });
+    expectSuccess(r, 200);
+    assert.equal(r.json.data.name, `Tea2-${stamp}`);
+    assert.equal(r.json.data.productVariants.length, 3);
+});
+await step("PATCH empty + unknown variant → 400/404", async () => {
+    let r = await owner.req("PATCH", `/shops/${shopA}/products/${pProductId}`, {});
+    expectFailure(r, 400);
+    r = await owner.req("PATCH", `/shops/${shopA}/products/${pProductId}`, {
+        variants: [{ id: "00000000-0000-0000-0000-000000000000", price: "1" }],
+    });
+    expectFailure(r, 404);
+});
+await step("GET flat variants price-sorted + barcode lookup", async () => {
+    let r = await owner.req("GET", `/shops/${shopA}/products/variants?sortBy=price&sortOrder=asc`);
+    expectSuccess(r, 200);
+    assert.ok(r.json.data.items.length >= 3);
+    assert.ok(r.json.data.items[0].product, "parent product missing");
+    r = await owner.req("GET", `/shops/${shopA}/products/variants?barcode=BC${stamp}1`);
+    expectSuccess(r, 200);
+    assert.equal(r.json.data.items.length, 1);
+});
+await step("PATCH single variant → 200, empty → 400", async () => {
+    let r = await owner.req("PATCH", `/shops/${shopA}/products/variants/${pV1}`, { price: "11.50" });
+    expectSuccess(r, 200);
+    r = await owner.req("PATCH", `/shops/${shopA}/products/variants/${pV1}`, {});
+    expectFailure(r, 400);
+});
+await step("POST attach URL image → list → delete", async () => {
+    let r = await owner.req("POST", `/shops/${shopA}/products/${pProductId}/images`, {
+        url: "https://example.com/tea.jpg",
+    });
+    expectSuccess(r, 201);
+    const imgId = r.json.data.id;
+    r = await owner.req("GET", `/shops/${shopA}/products/${pProductId}/images`);
+    expectSuccess(r, 200);
+    assert.ok(r.json.data.some((i) => i.id === imgId));
+    r = await owner.req("DELETE", `/shops/${shopA}/products/${pProductId}/images/${imgId}`);
+    expectSuccess(r, 200);
+});
+await step("UPLOAD file image → 201 + bytes on disk + served", async () => {
+    const r = await uploadImage(owner, shopA, pProductId, {
+        bytes: PNG_1PX,
+        filename: "tea.png",
+        mimetype: "image/png",
+    });
+    expectSuccess(r, 201);
+    assert.ok(r.json.data.url.startsWith("/uploads/"), `unexpected url ${r.json.data.url}`);
+    assert.ok(existsSync(diskPath(r.json.data.url)), "file missing on disk");
+    const got = await fetch(`${BASE}${r.json.data.url}`);
+    assert.equal(got.status, 200);
+    assert.ok((got.headers.get("content-type") || "").includes("image/"));
+    const del = await owner.req("DELETE", `/shops/${shopA}/products/${pProductId}/images/${r.json.data.id}`);
+    expectSuccess(del, 200);
+    assert.ok(!existsSync(diskPath(r.json.data.url)), "file not cleaned from disk");
+});
+await step("UPLOAD variant-scoped file → 201", async () => {
+    const r = await uploadImage(owner, shopA, pProductId, {
+        variantId: pV1,
+        bytes: PNG_1PX,
+        filename: "v.png",
+        mimetype: "image/png",
+    });
+    expectSuccess(r, 201);
+    assert.equal(r.json.data.variantId, pV1);
+});
+await step("UPLOAD rejects: type, size, missing, anon", async () => {
+    let r = await uploadImage(owner, shopA, pProductId, {
+        bytes: Buffer.from("hello"),
+        filename: "x.txt",
+        mimetype: "text/plain",
+    });
+    expectFailure(r, 400);
+    r = await uploadImage(owner, shopA, pProductId, {
+        bytes: Buffer.alloc(6 * 1024 * 1024),
+        filename: "big.png",
+        mimetype: "image/png",
+    });
+    expectFailure(r, 400);
+    r = await uploadImage(owner, shopA, pProductId, { bytes: null, filename: "x.png", mimetype: "image/png" });
+    expectFailure(r, 400);
+    const anonUp = await uploadImage(new Client(), shopA, pProductId, {
+        bytes: PNG_1PX,
+        filename: "a.png",
+        mimetype: "image/png",
+    });
+    expectFailure(anonUp, 401);
+});
+await step("UPLOAD cap: 5 shared then 400, files tracked", async () => {
+    // Shared scope currently holds 0 (URL image was deleted above).
+    const urls = [];
+    for (let i = 0; i < 5; i++) {
+        const r = await uploadImage(owner, shopA, pProductId, {
+            bytes: PNG_1PX,
+            filename: `s${i}.png`,
+            mimetype: "image/png",
+        });
+        expectSuccess(r, 201);
+        urls.push(r.json.data.url);
+    }
+    const over = await uploadImage(owner, shopA, pProductId, {
+        bytes: PNG_1PX,
+        filename: "s5.png",
+        mimetype: "image/png",
+    });
+    expectFailure(over, 400);
+    for (const u of urls) assert.ok(existsSync(diskPath(u)), `missing ${u}`);
+    // Stash for the product-delete cleanup check below.
+    globalThis.__e2eUploads = urls;
+});
+await step("DELETE variant keeps others, last guarded", async () => {
+    // pV1 is variant-scoped image holder; deleting variant cascades its file row.
+    let r = await owner.req("DELETE", `/shops/${shopA}/products/variants/${pV2}`);
+    expectSuccess(r, 200);
+    const det = await owner.req("GET", `/shops/${shopA}/products/${pProductId}`);
+    expectSuccess(det, 200);
+    const remaining = det.json.data.productVariants.map((v) => v.id);
+    assert.ok(!remaining.includes(pV2) && remaining.length === 2);
+    r = await owner.req("DELETE", `/shops/${shopA}/products/variants/${pV1}`);
+    expectSuccess(r, 200);
+    r = await owner.req("DELETE", `/shops/${shopA}/products/variants/${remaining.find((id) => id !== pV1 && id !== pV2)}`);
+    expectFailure(r, 400);
+});
+await step("DELETE product cleans rows + files", async () => {
+    const r = await owner.req("DELETE", `/shops/${shopA}/products/${pProductId}`);
+    expectSuccess(r, 200);
+    for (const u of globalThis.__e2eUploads || []) assert.ok(!existsSync(diskPath(u)), `orphan file ${u}`);
+    const gone = await owner.req("GET", `/shops/${shopA}/products/${pProductId}`);
+    expectFailure(gone, 404);
+});
+await step("DELETE attribute freed by cascade → 200", async () => {
+    const r = await owner.req("DELETE", `/shops/${shopA}/attributes/${pAttrId}`);
+    expectSuccess(r, 200);
 });
 
 console.log("── Cleanup ──");

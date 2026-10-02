@@ -4,8 +4,8 @@ import { connectRedis, initSearchIndexes } from "./config/redis";
 import authRouter from "./modules/auth/auth.routes";
 import shopsRouter from "./modules/shops/shops.routes";
 import invitesMineRouter from "./modules/invites/invites.mine.routes";
-import rolesRouter from "./modules/roles/roles.routes";
 import { ErrorHandler } from "./middleware/errorHandler";
+import { LocalDiskStorage, storage, UPLOADS_ROOT } from "./utils/storage";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -34,6 +34,14 @@ try {
 app.use(express.json());
 app.use(cookieParser());
 app.set("trust proxy", env.TRUST_PROXY);
+
+// Product images are public-by-design (storefronts need them without a
+// session), so they serve without authenticate. Confidentiality was never
+// a property of these URLs — don't add auth here later thinking it adds any.
+if (storage instanceof LocalDiskStorage) {
+    await storage.ensureRoot();
+}
+app.use("/uploads", express.static(UPLOADS_ROOT));
 
 app.use("/auth/", authRouter);
 app.use("/shops/", shopsRouter);

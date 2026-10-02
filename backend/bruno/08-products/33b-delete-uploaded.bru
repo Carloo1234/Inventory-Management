@@ -1,11 +1,11 @@
 meta {
-  name: Delete product cascades
+  name: Delete uploaded image
   type: http
-  seq: 43
+  seq: 35
 }
 
 delete {
-  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}
+  url: {{baseUrl}}/shops/{{shopId}}/products/{{productId}}/images/{{uploadId}}
   auth: none
 }
 
